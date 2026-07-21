@@ -106,6 +106,20 @@ namespace RoomBookingApp.Models
 }
 ```
 
+### PaymentStatus
+
+```csharp
+namespace RoomBookingApp.Models
+{
+    public enum PaymentStatus
+    {
+        Unpaid = 0,
+        Paid = 1,
+        Refunded = 2
+    }
+}
+```
+
 ### Room
 
 ```csharp
@@ -144,6 +158,8 @@ namespace RoomBookingApp.Models
         public decimal TotalPrice { get; set; }
         public BookingStatus Status { get; set; } = BookingStatus.Pending;
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+        public PaymentStatus PaymentStatus { get; set; } = PaymentStatus.Unpaid;
+        public DateTime? PaidAt { get; set; }
         public Room? Room { get; set; }
     }
 }
@@ -188,6 +204,20 @@ namespace RoomBookingApp.Models
         public Room Room { get; set; } = null!;
         public string EquipmentId { get; set; } = string.Empty;
         public Equipment Equipment { get; set; } = null!;
+    }
+}
+
+### Wallet
+
+```csharp
+namespace RoomBookingApp.Models
+{
+    public class Wallet
+    {
+        public string UserId { get; set; } = string.Empty;   // PK, FK → AspNetUsers.Id
+        public decimal Balance { get; set; }                  // Số dư hiện tại
+
+        public IdentityUser User { get; set; } = null!;
     }
 }
 ```
@@ -245,11 +275,13 @@ namespace RoomBookingApp.Data
         public DbSet<BookingApproval> BookingApprovals => Set<BookingApproval>();
         public DbSet<Equipment> Equipment => Set<Equipment>();
         public DbSet<RoomEquipment> RoomEquipments => Set<RoomEquipment>();
+        public DbSet<Wallet> Wallets => Set<Wallet>();
 
         protected override void OnModelCreating(ModelBuilder builder)
         {
             base.OnModelCreating(builder);
             builder.Entity<RoomEquipment>().HasKey(re => new { re.RoomId, re.EquipmentId });
+            builder.Entity<Wallet>().HasKey(w => w.UserId);
         }
     }
 }
@@ -377,7 +409,7 @@ namespace RoomBookingApp.Services
 
 ---
 
-## 5. ApprovalService — Duyệt / Từ chối đặt phòng
+## 5. ApprovalService — Duyệt / Từ chối + trừ Wallet
 
 ```csharp
 using Microsoft.EntityFrameworkCore;
@@ -389,7 +421,7 @@ namespace RoomBookingApp.Services
     public interface IApprovalService
     {
         Task<List<Booking>> GetPendingAsync();
-        Task<bool> ApproveAsync(string bookingId, string approverId);
+        Task<(bool Success, string? Error)> ApproveAsync(string bookingId, string approverId);
         Task<bool> RejectAsync(string bookingId, string approverId, string reason);
     }
 
@@ -407,12 +439,21 @@ namespace RoomBookingApp.Services
                 .ToListAsync();
         }
 
-        public async Task<bool> ApproveAsync(string bookingId, string approverId)
+        public async Task<(bool Success, string? Error)> ApproveAsync(string bookingId, string approverId)
         {
             var booking = await _context.Bookings.FindAsync(bookingId);
-            if (booking == null || booking.Status != BookingStatus.Pending) return false;
+            if (booking == null || booking.Status != BookingStatus.Pending)
+                return (false, "Đơn không tồn tại hoặc không ở trạng thái chờ duyệt.");
 
+            var wallet = await _context.Wallets.FindAsync(booking.UserId);
+            if (wallet == null || wallet.Balance < booking.TotalPrice)
+                return (false, $"Số dư không đủ (cần {booking.TotalPrice:N0}đ, hiện có {(wallet?.Balance ?? 0):N0}đ).");
+
+            wallet.Balance -= booking.TotalPrice;
             booking.Status = BookingStatus.Approved;
+            booking.PaymentStatus = PaymentStatus.Paid;
+            booking.PaidAt = DateTime.UtcNow;
+
             _context.BookingApprovals.Add(new BookingApproval
             {
                 Id = IdGenerator.Next(IdGenerator.Approval),
@@ -422,13 +463,22 @@ namespace RoomBookingApp.Services
                 ApprovedAt = DateTime.UtcNow
             });
             await _context.SaveChangesAsync();
-            return true;
+            return (true, null);
         }
 
         public async Task<bool> RejectAsync(string bookingId, string approverId, string reason)
         {
             var booking = await _context.Bookings.FindAsync(bookingId);
             if (booking == null || booking.Status != BookingStatus.Pending) return false;
+
+            // Nếu booking đã thanh toán trước đó (edge case) → hoàn tiền
+            if (booking.PaymentStatus == PaymentStatus.Paid)
+            {
+                var wallet = await _context.Wallets.FindAsync(booking.UserId);
+                if (wallet != null)
+                    wallet.Balance += booking.TotalPrice;
+                booking.PaymentStatus = PaymentStatus.Refunded;
+            }
 
             booking.Status = BookingStatus.Rejected;
             _context.BookingApprovals.Add(new BookingApproval
@@ -959,8 +1009,12 @@ namespace RoomBookingApp.Areas.Admin.Controllers
         public async Task<IActionResult> Approve(string id)
         {
             var approverId = User.FindFirstValue(ClaimTypes.NameIdentifier)!;
-            var result = await _approvalService.ApproveAsync(id, approverId);
-            if (!result) return NotFound();
+            var (success, error) = await _approvalService.ApproveAsync(id, approverId);
+            if (!success)
+            {
+                TempData["ErrorMessage"] = error ?? "Không thể duyệt đơn.";
+                return RedirectToAction("Pending");
+            }
             TempData["SuccessMessage"] = "Đã duyệt đơn đặt phòng.";
             return RedirectToAction("Pending");
         }
@@ -981,7 +1035,90 @@ namespace RoomBookingApp.Areas.Admin.Controllers
 
 ---
 
-## 12. Admin — UserController (Reset mật khẩu)
+## 12. Admin — WalletController (Nạp tiền / Quản lý số dư)
+
+```csharp
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
+using RoomBookingApp.Data;
+
+namespace RoomBookingApp.Areas.Admin.Controllers
+{
+    [Area("Admin")]
+    [Authorize(Roles = "Admin,Staff")]
+    public class WalletController : Controller
+    {
+        private readonly ApplicationDbContext _context;
+        private readonly UserManager<IdentityUser> _userManager;
+
+        public WalletController(ApplicationDbContext context, UserManager<IdentityUser> userManager)
+        {
+            _context = context;
+            _userManager = userManager;
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> Index()
+        {
+            var wallets = await _context.Wallets
+                .Include(w => w.User)
+                .OrderBy(w => w.User.Email)
+                .ToListAsync();
+
+            var users = await _userManager.Users.ToListAsync();
+            ViewBag.AllUsers = users;
+            return View(wallets);
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> TopUp(string userId)
+        {
+            var user = await _userManager.FindByIdAsync(userId);
+            if (user == null) return NotFound();
+
+            var wallet = await _context.Wallets.FindAsync(userId);
+            ViewBag.UserEmail = user.Email;
+            ViewBag.CurrentBalance = wallet?.Balance ?? 0;
+            return View();
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> TopUp(string userId, decimal amount)
+        {
+            if (amount <= 0)
+            {
+                ModelState.AddModelError("", "Số tiền phải lớn hơn 0.");
+                var user = await _userManager.FindByIdAsync(userId);
+                ViewBag.UserEmail = user!.Email;
+                ViewBag.CurrentBalance = (await _context.Wallets.FindAsync(userId))?.Balance ?? 0;
+                return View();
+            }
+
+            var wallet = await _context.Wallets.FindAsync(userId);
+            if (wallet == null)
+            {
+                wallet = new Wallet { UserId = userId, Balance = amount };
+                _context.Wallets.Add(wallet);
+            }
+            else
+            {
+                wallet.Balance += amount;
+            }
+
+            await _context.SaveChangesAsync();
+            TempData["SuccessMessage"] = $"Đã nạp {amount:N0}đ vào ví.";
+            return RedirectToAction("Index");
+        }
+    }
+}
+```
+
+---
+
+## 13. Admin — UserController (Reset mật khẩu)
 
 ```csharp
 using Microsoft.AspNetCore.Authorization;
@@ -1071,7 +1208,7 @@ namespace RoomBookingApp.Areas.Admin.Controllers
 
 ---
 
-## 13. Admin — DashboardController (Thống kê)
+## 14. Admin — DashboardController (Thống kê)
 
 ```csharp
 using Microsoft.AspNetCore.Authorization;
@@ -1118,7 +1255,7 @@ namespace RoomBookingApp.Areas.Admin.Controllers
 
 ---
 
-## 14. Program.cs — Cấu hình Identity + RBAC + Seed
+## 15. Program.cs — Cấu hình Identity + RBAC + Seed
 
 ```csharp
 using Microsoft.AspNetCore.Identity;
@@ -1181,9 +1318,9 @@ app.Run();
 
 ---
 
-## 15. xUnit — Unit Test mẫu cho BookingService
+## 16. xUnit — Unit Test mẫu cho BookingService
 
-> Xem thêm `guildlines.database.md` cho DDL. `guildlines.testcase.md` cho 52 test case tổng thể.
+> Xem thêm `guildlines.database.md` cho DDL. `guildlines.testcase.md` cho 58 test case tổng thể.
 
 ```csharp
 using RoomBookingApp.Models;

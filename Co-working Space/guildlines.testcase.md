@@ -55,10 +55,15 @@
 | TC38 | Staff không reset password cho Staff | Staff truy cập ResetPassword của Staff khác | 403 Forbidden |
 | TC39 | Admin reset password cho Staff | Admin vào ResetPassword của Staff | Thành công |
 | TC40 | User không truy cập được Admin | User vào `/Admin/User` | Redirect login hoặc 403 |
-| TC41 | Admin upload ảnh khi tạo phòng | Admin vào Create, chọn file ảnh, submit | Ảnh lưu vào `wwwroot/uploads/rooms/`, `ImageUrl` ghi đường dẫn |
-| TC42 | Admin thay ảnh khi sửa phòng | Admin vào Edit, chọn file ảnh mới, submit | Ảnh cũ bị xóa (hoặc ghi đè), `ImageUrl` cập nhật |
-| TC43 | Phòng không có ảnh — fallback | Tạo phòng không upload ảnh | `ImageUrl` = null, view hiển thị ảnh mặc định no-image.jpg |
-| TC44 | Ảnh hiển thị đúng trên Room/Index | User xem danh sách phòng | Card phòng có ảnh với `object-fit: cover`, không vỡ layout |
+| TC41 | Staff nạp tiền vào ví | Staff vào `/Admin/Wallet/TopUp`, nhập 500.000 | Wallet balance tăng 500.000 |
+| TC42 | Wallet auto-create khi nạp lần đầu | User chưa có Wallet, nạp 200.000 | Wallet được tạo mới, Balance = 200.000 |
+| TC43 | Duyệt đơn — số dư đủ | User có 500.000, đặt phòng 200.000, Staff Approve | Status → Approved, PaymentStatus → Paid, Balance còn 300.000 |
+| TC44 | Duyệt đơn — số dư không đủ | User có 100.000, đặt phòng 200.000, Staff Approve | Báo lỗi "Số dư không đủ", Status vẫn Pending |
+| TC45 | Từ chối đơn — hoàn tiền | Booking đã Paid (do edge case), Staff Reject | PaymentStatus → Refunded, Balance cộng lại |
+| TC46 | Admin upload ảnh khi tạo phòng | Admin vào Create, chọn file ảnh, submit | Ảnh lưu vào `wwwroot/uploads/rooms/`, `ImageUrl` ghi đường dẫn |
+| TC47 | Admin thay ảnh khi sửa phòng | Admin vào Edit, chọn file ảnh mới, submit | Ảnh cũ bị xóa (hoặc ghi đè), `ImageUrl` cập nhật |
+| TC48 | Phòng không có ảnh — fallback | Tạo phòng không upload ảnh | `ImageUrl` = null, view hiển thị ảnh mặc định no-image.jpg |
+| TC49 | Ảnh hiển thị đúng trên Room/Index | User xem danh sách phòng | Card phòng có ảnh với `object-fit: cover`, không vỡ layout |
 
 ---
 
@@ -66,10 +71,10 @@
 
 | # | Test Case | Steps | Expected |
 |---|-----------|-------|----------|
-| TC45 | Seed Admin mặc định | Chạy app lần đầu, chưa có user nào | Tự động tạo `admin@coworking.com` / `Admin@123` với role Admin |
-| TC46 | Seed role | Chạy app, kiểm tra bảng `AspNetRoles` | Có 3 role: Admin, Staff, User |
-| TC47 | FK — Xóa phòng có booking | Xóa phòng đang có booking | Bị khóa bởi FK hoặc cascade xóa booking (tùy cấu hình) |
-| TC48 | Index overlap | Kiểm tra execution plan của query `HasOverlapAsync` | Index seek trên `IX_Bookings_Overlap` thay vì table scan |
+| TC50 | Seed Admin mặc định | Chạy app lần đầu, chưa có user nào | Tự động tạo `admin@coworking.com` / `Admin@123` với role Admin |
+| TC51 | Seed role | Chạy app, kiểm tra bảng `AspNetRoles` | Có 3 role: Admin, Staff, User |
+| TC52 | FK — Xóa phòng có booking | Xóa phòng đang có booking | Bị khóa bởi FK hoặc cascade xóa booking (tùy cấu hình) |
+| TC53 | Index overlap | Kiểm tra execution plan của query `HasOverlapAsync` | Index seek trên `IX_Bookings_Overlap` thay vì table scan |
 
 ---
 
@@ -77,7 +82,8 @@
 
 | # | Test Case | Steps | Expected |
 |---|-----------|-------|----------|
-| TC49 | Validation giờ — client | Nhập `StartTime` < hiện tại, submit form | JS alert chặn trước khi gửi lên server |
-| TC50 | Validation giờ — server | Tắt JS, gửi request với giờ quá khứ | Server trả validation error, không tạo booking |
-| TC51 | SweetAlert2 confirm hủy | Bấm nút Hủy đơn | Popup xác nhận "Bạn có chắc muốn hủy?" |
-| TC52 | Responsive layout | Mở trên mobile (375px width) | Card form không bị vỡ, các field xếp dọc |
+| TC54 | Validation giờ — client | Nhập `StartTime` < hiện tại, submit form | JS alert chặn trước khi gửi lên server |
+| TC55 | Validation giờ — server | Tắt JS, gửi request với giờ quá khứ | Server trả validation error, không tạo booking |
+| TC56 | SweetAlert2 confirm hủy | Bấm nút Hủy đơn | Popup xác nhận "Bạn có chắc muốn hủy?" |
+| TC57 | Responsive layout | Mở trên mobile (375px width) | Card form không bị vỡ, các field xếp dọc |
+| TC58 | Cột PaymentStatus hiển thị trên MyBookings | User xem danh sách đơn | Thấy badge "Đã TT" / "Chưa TT" / "Hoàn tiền" |

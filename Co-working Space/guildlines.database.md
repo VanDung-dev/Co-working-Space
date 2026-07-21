@@ -80,6 +80,8 @@ CREATE TABLE Bookings (
     EndTime DATETIME2 NOT NULL,
     TotalPrice DECIMAL(18, 2) NOT NULL DEFAULT 0,
     Status INT NOT NULL DEFAULT 0,      -- 0:Pending 1:Approved 2:Rejected 3:Cancelled
+    PaymentStatus INT NOT NULL DEFAULT 0, -- 0:Unpaid 1:Paid 2:Refunded
+    PaidAt DATETIME2 NULL,
     CreatedAt DATETIME2 NOT NULL DEFAULT GETUTCDATE(),
     CONSTRAINT FK_Bookings_Rooms FOREIGN KEY (RoomId) REFERENCES Rooms(Id)
 );
@@ -111,7 +113,17 @@ CREATE TABLE Equipment (
 );
 ```
 
-### 2.5. RoomEquipment (bảng nối)
+### 2.5. Wallets
+
+```sql
+CREATE TABLE Wallets (
+    UserId NVARCHAR(20) PRIMARY KEY,   -- PK, FK → AspNetUsers.Id
+    Balance DECIMAL(18, 2) NOT NULL DEFAULT 0,
+    CONSTRAINT FK_Wallets_Users FOREIGN KEY (UserId) REFERENCES AspNetUsers(Id)
+);
+```
+
+### 2.6. RoomEquipment (bảng nối)
 
 ```sql
 CREATE TABLE RoomEquipment (
@@ -131,6 +143,7 @@ CREATE TABLE RoomEquipment (
 -- FK tới AspNetUsers
 ALTER TABLE Bookings ADD CONSTRAINT FK_Bookings_Users FOREIGN KEY (UserId) REFERENCES AspNetUsers(Id);
 ALTER TABLE BookingApprovals ADD CONSTRAINT FK_Approvals_Users FOREIGN KEY (ApproverId) REFERENCES AspNetUsers(Id);
+ALTER TABLE Wallets ADD CONSTRAINT FK_Wallets_Users FOREIGN KEY (UserId) REFERENCES AspNetUsers(Id);
 
 -- Index chống full-scan khi check trùng lịch
 CREATE INDEX IX_Bookings_Overlap ON Bookings (RoomId, Status, StartTime, EndTime) INCLUDE (Id);

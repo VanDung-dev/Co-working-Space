@@ -92,6 +92,8 @@
 | `Admin/Dashboard/Index.cshtml` | Admin DashboardController | Thống kê số đơn, phòng dùng nhiều |
 | `Admin/User/Index.cshtml` | Admin UserController | Bảng danh sách user + nút Reset Password |
 | `Admin/User/ResetPassword.cshtml` | Admin UserController | Form nhập mật khẩu mới |
+| `Admin/Wallet/Index.cshtml` | Admin WalletController | Bảng danh sách user + số dư + nút Nạp tiền |
+| `Admin/Wallet/TopUp.cshtml` | Admin WalletController | Form nhập số tiền cần nạp |
 
 ---
 
@@ -272,6 +274,16 @@
     {
         { 0, "Chờ duyệt" }, { 1, "Đã duyệt" }, { 2, "Từ chối" }, { 3, "Đã hủy" }
     };
+    var paymentBadge = new Dictionary<int, string>
+    {
+        { 0, "badge bg-secondary" },   // Unpaid
+        { 1, "badge bg-success" },     // Paid
+        { 2, "badge bg-info" }         // Refunded
+    };
+    var paymentText = new Dictionary<int, string>
+    {
+        { 0, "Chưa TT" }, { 1, "Đã TT" }, { 2, "Hoàn tiền" }
+    };
 }
 
 <div class="container mt-4">
@@ -294,6 +306,7 @@
                         <th>Kết thúc</th>
                         <th>Giá</th>
                         <th>Trạng thái</th>
+                        <th>TT</th>
                         <th></th>
                     </tr>
                 </thead>
@@ -308,6 +321,7 @@
                             <td>@b.EndTime.ToLocalTime().ToString("HH:mm")</td>
                             <td>@b.TotalPrice.ToString("N0") đ</td>
                             <td><span class="@statusBadge[(int)b.Status]">@statusText[(int)b.Status]</span></td>
+                            <td><span class="@paymentBadge[(int)b.PaymentStatus]">@paymentText[(int)b.PaymentStatus]</span></td>
                             <td>
                                 @if (b.Status == BookingStatus.Pending)
                                 {
@@ -695,11 +709,96 @@
 
 ---
 
-## 13. Ghi chú khi tạo view
+---
+
+## 13. Admin — Quản lý ví (`Areas/Admin/Views/Wallet/Index.cshtml`)
+
+```html
+@model List<RoomBookingApp.Models.Wallet>
+
+@{
+    ViewData["Title"] = "Quản lý ví";
+    var allUsers = (List<IdentityUser>)ViewBag.AllUsers;
+}
+
+<div class="container mt-4">
+    <h4 class="mb-3">💰 Quản lý ví tiền</h4>
+    <div class="table-responsive">
+        <table class="table table-hover align-middle">
+            <thead class="table-light">
+                <tr>
+                    <th>Email</th>
+                    <th>Số dư</th>
+                    <th></th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var u in allUsers)
+                {
+                    var wallet = Model.FirstOrDefault(w => w.UserId == u.Id);
+                    <tr>
+                        <td>@u.Email</td>
+                        <td class="@(wallet?.Balance > 0 ? "text-success fw-bold" : "text-muted")">
+                            @(wallet?.Balance.ToString("N0") ?? "0") đ
+                        </td>
+                        <td>
+                            <a asp-action="TopUp" asp-route-userId="@u.Id"
+                               class="btn btn-outline-success btn-sm">➕ Nạp tiền</a>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</div>
+```
+
+---
+
+## 14. Admin — Nạp tiền (`Areas/Admin/Views/Wallet/TopUp.cshtml`)
+
+```html
+@{
+    ViewData["Title"] = "Nạp tiền";
+}
+
+<div class="container mt-4" style="max-width: 450px;">
+    <div class="card shadow-sm border-0 rounded-3">
+        <div class="card-header bg-success text-white py-3">
+            <h5 class="card-title mb-0">💰 Nạp tiền vào ví</h5>
+        </div>
+        <div class="card-body p-4">
+            <p class="text-muted">Người dùng: <strong>@ViewBag.UserEmail</strong></p>
+            <p class="text-muted">Số dư hiện tại: <strong>@ViewBag.CurrentBalance.ToString("N0") đ</strong></p>
+
+            <form asp-action="TopUp" method="post">
+                @Html.AntiForgeryToken()
+                <input type="hidden" name="userId" value="@ViewContext.RouteData.Values["userId"]" />
+                <div asp-validation-summary="ModelOnly" class="alert alert-danger"></div>
+
+                <div class="mb-3">
+                    <label for="amount" class="form-label fw-bold">Số tiền nạp</label>
+                    <input name="amount" type="number" step="1000" class="form-control" min="1000" required />
+                    <div class="form-text">Tối thiểu 1.000đ.</div>
+                </div>
+
+                <div class="d-grid gap-2">
+                    <button type="submit" class="btn btn-success">Xác nhận nạp</button>
+                    <a asp-action="Index" class="btn btn-outline-secondary">Quay lại</a>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+```
+
+---
+
+## 15. Ghi chú khi tạo view
 
 - Tất cả Admin view đặt trong `Areas/Admin/Views/{Controller}/`
 - Dùng `Bootstrap 5` grid (`container`, `row`, `col-*`) + card component
 - Dùng `SweetAlert2` cho confirm dialog (hủy đơn, xóa thiết bị)
 - Dùng `TempData["SuccessMessage"]` / `TempData["ErrorMessage"]` — đã có sẵn render trong `_Layout.cshtml` §3
-- Admin layout nên thêm sidebar: quản lý phòng, thiết bị, duyệt đơn, dashboard, quản lý user
+- Admin layout nên thêm sidebar: quản lý phòng, thiết bị, duyệt đơn, dashboard, quản lý user, quản lý ví
 - Form có upload file (Admin Create/Edit phòng) **phải** thêm `enctype="multipart/form-data"` trong thẻ `<form>`

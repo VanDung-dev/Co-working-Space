@@ -24,13 +24,15 @@
 2. **Quản lý Trang thiết bị:** Admin CRUD (thêm/xóa), Staff xem + cập nhật trạng thái (Sẵn sàng / Bảo trì / Hỏng) + điều chuyển thiết bị giữa các phòng.
 3. **Duyệt Đặt phòng:** Admin & Staff — Xem danh sách đơn chờ xử lý, chấp nhận (`Approve`) hoặc từ chối (`Reject`) kèm nhập lý do từ chối.
 4. **Quản lý người dùng:** Staff xem danh sách User + reset mật khẩu. Admin xem tất cả + reset mật khẩu cho cả Staff.
-5. **Dashboard Thống kê:** Chỉ Admin — Tổng số lượt đặt phòng trong tháng, Tỷ lệ phòng được sử dụng nhiều nhất.
+5. **Quản lý ví tiền (Wallet):** Staff & Admin — Xem số dư, nạp tiền vào ví user. Hệ thống tự trừ khi duyệt đơn.
+6. **Dashboard Thống kê:** Chỉ Admin — Tổng số lượt đặt phòng trong tháng, Tỷ lệ phòng được sử dụng nhiều nhất.
 
 ### C. Phía System / Backend Logic (Nghiệp vụ cốt lõi)
 
 1. **Thuật toán chống trùng lịch (Overlap Check):** Kiểm tra khoảng thời gian `[StartTime, EndTime]` của đơn mới có bị đè lên bất kỳ đơn nào `Đã duyệt` hoặc `Chờ duyệt` trong cùng phòng hay không.
 2. **Phân quyền (RBAC):** `Admin` truy cập vùng `/Admin`, `User` chỉ thao tác trên giao diện Client.
 3. **Password Reset Chain:** User → Staff, Staff → Admin (reset qua `Admin/User/ResetPassword`).
+4. **Ví tiền (Wallet):** Mỗi user có 1 ví, Staff nạp tiền tại quầy. Khi duyệt đơn, hệ thống tự trừ `TotalPrice` khỏi ví. Từ chối đơn → hoàn tiền.
 
 ---
 
@@ -38,10 +40,10 @@
 
 | File | Nội dung |
 |------|----------|
-| [`guildlines.database.md`](guildlines.database.md) | Quy tắc ID, SQL DDL đầy đủ (Rooms, Bookings, BookingApprovals, Equipment, RoomEquipment), FK, Index |
+| [`guildlines.database.md`](guildlines.database.md) | Quy tắc ID, SQL DDL đầy đủ (Rooms, Bookings, BookingApprovals, Equipment, Wallets, RoomEquipment), FK, Index |
 | [`guildlines.backend.md`](guildlines.backend.md) | Entity Models, IdGenerator, DbContext, Services (BookingService, RoomService, ApprovalService), Controllers (Account, Room, Booking, Admin), Program.cs + RBAC + Seed |
 | [`guildlines.frontend.md`](guildlines.frontend.md) | Razor View (Create.cshtml), danh sách view cần tạo, ghi chú Bootstrap / SweetAlert2 |
-| [`guildlines.testcase.md`](guildlines.testcase.md) | 52 test cases: User flow, Admin/Staff flow, System, Giao diện |
+| [`guildlines.testcase.md`](guildlines.testcase.md) | 58 test cases: User flow, Admin/Staff flow, System, Giao diện |
 
 ---
 
@@ -75,6 +77,9 @@
 | `/Admin/Booking/Pending` | ❌ | ❌ | ✅ | ✅ |
 | `/Admin/Booking/Approve` | ❌ | ❌ | ✅ | ✅ |
 | `/Admin/Booking/Reject` | ❌ | ❌ | ✅ | ✅ |
+| **Admin — Ví tiền** | | | | |
+| `/Admin/Wallet` (xem) | ❌ | ❌ | ✅ | ✅ |
+| `/Admin/Wallet/TopUp` | ❌ | ❌ | ✅ | ✅ |
 | **Admin — Người dùng** | | | | |
 | `/Admin/User` (xem) | ❌ | ❌ | ✅ (chỉ User) | ✅ (tất cả) |
 | `/Admin/User/ResetPassword` | ❌ | ❌ | ✅ (chỉ User) | ✅ (tất cả) |
@@ -83,4 +88,4 @@
 
 ---
 
-Bộ code mẫu bao phủ toàn bộ 12 chức năng (**A.1–A.4, B.1–B.5, C.1–C.3**) với 3 role phân quyền rõ ràng: **User**, **Staff**, **Admin**.
+Bộ code mẫu bao phủ toàn bộ 13 chức năng (**A.1–A.4, B.1–B.6, C.1–C.4**) với 3 role phân quyền rõ ràng: **User**, **Staff**, **Admin**.
