@@ -89,3 +89,92 @@
 ---
 
 Bộ code mẫu bao phủ toàn bộ 13 chức năng (**A.1–A.4, B.1–B.6, C.1–C.4**) với 3 role phân quyền rõ ràng: **User**, **Staff**, **Admin**.
+
+---
+
+## ✅ 5. Checklist triển khai (từ guildlines con)
+
+Đánh dấu `[x]` khi hoàn thành từng mục. Chi tiết code/thực hiện tại file tương ứng.
+
+### Database (`guildlines.database.md`)
+
+- [ ] Tạo project + cấu hình SQL Server connection string
+- [ ] Tạo migration / chạy DDL: Rooms, Bookings, BookingApprovals, Equipment, Wallets, RoomEquipment
+- [ ] Thêm FK: Bookings→Rooms, Bookings→AspNetUsers, Approvals→Bookings, Approvals→AspNetUsers, Wallets→AspNetUsers
+- [ ] Thêm index `IX_Bookings_Overlap`
+- [ ] Seed Admin mặc định (`admin@coworking.com` / `Admin@123`)
+
+### Backend Models + DbContext (`guildlines.backend.md` §1–2)
+
+- [ ] `IdGenerator` — service sinh ID tự động
+- [ ] Enums: `BookingStatus`, `EquipmentStatus`, `PaymentStatus`
+- [ ] Models: `Room`, `Booking`, `BookingApproval`, `Equipment`, `RoomEquipment`, `Wallet`
+- [ ] ViewModels: `CreateBookingViewModel`, `RegisterViewModel`, `LoginViewModel`, `ProfileViewModel`
+- [ ] `ApplicationDbContext` — 6 DbSets + cấu hình PK/HK
+
+### Backend Services (`guildlines.backend.md` §3–5)
+
+- [ ] `BookingService` — `HasOverlapAsync` + `CreateBookingAsync` (Serializable transaction)
+- [ ] `RoomService` — `SearchAsync` (Include RoomEquipments + bộ lọc capacity/location/equipment)
+- [ ] `ApprovalService` — `GetPendingAsync`, `ApproveAsync` (trừ Wallet), `RejectAsync` (hoàn tiền nếu đã trừ)
+
+### Backend Controllers — User (`guildlines.backend.md` §6–8)
+
+- [ ] `AccountController` — Register, Login, Logout, Profile (Identity)
+- [ ] `RoomController` — Index (tra cứu + lọc phòng)
+- [ ] `BookingController` — Create, MyBookings, Cancel (chỉ hủy khi Pending)
+
+### Backend Controllers — Admin (`guildlines.backend.md` §9–14)
+
+- [ ] `Admin/RoomController` — CRUD phòng + ToggleStatus (Staff xem/toggle, Admin full)
+- [ ] `Admin/EquipmentController` — CRUD thiết bị + UpdateStatus + Transfer
+- [ ] `Admin/BookingController` — Pending + Approve/Reject
+- [ ] `Admin/WalletController` — Index + TopUp
+- [ ] `Admin/UserController` — Index + ResetPassword (Staff→User, Admin→all)
+- [ ] `Admin/DashboardController` — thống kê số đơn + phòng dùng nhiều
+
+### Program.cs + Seed (`guildlines.backend.md` §15)
+
+- [ ] Cấu hình DI: DbContext, Identity, Services
+- [ ] Cấu hình Authorization policies: `AdminOnly`, `StaffOrAdmin`
+- [ ] Seed 3 roles (Admin, Staff, User) + Admin default account
+- [ ] Routing: area + default
+
+### Frontend Views (`guildlines.frontend.md`)
+
+- [ ] `_Layout.cshtml` — navbar + TempData (SweetAlert2)
+- [ ] `Account/Register.cshtml` — form đăng ký
+- [ ] `Account/Login.cshtml` — form đăng nhập
+- [ ] `Account/Profile.cshtml` — xem/sửa SĐT
+- [ ] `Room/Index.cshtml` — danh sách phòng + ảnh + badge loại phòng + equipment
+- [ ] `Booking/Create.cshtml` — form đặt phòng + JS validation giờ
+- [ ] `Booking/MyBookings.cshtml` — lịch sử + nút hủy + cột PaymentStatus
+- [ ] `Admin/Room/Index.cshtml` — quản lý phòng + nút Bảo trì
+- [ ] `Admin/Room/Create.cshtml` — thêm phòng + upload ảnh (`enctype`)
+- [ ] `Admin/Room/ManageEquipment.cshtml` — gán thiết bị cho phòng
+- [ ] `Admin/Equipment/Index.cshtml` — danh sách + cập nhật trạng thái + nút điều chuyển
+- [ ] `Admin/Equipment/Transfer.cshtml` — form chuyển phòng
+- [ ] `Admin/Booking/Pending.cshtml` — danh sách chờ + nút Duyệt/Từ chối
+- [ ] `Admin/Wallet/Index.cshtml` — danh sách số dư + nút Nạp tiền
+- [ ] `Admin/Wallet/TopUp.cshtml` — form nạp tiền
+- [ ] `Admin/User/Index.cshtml` — quản lý user + nút Reset Password
+- [ ] `Admin/User/ResetPassword.cshtml` — form nhập mật khẩu mới
+- [ ] `Admin/Dashboard/Index.cshtml` — thống kê
+
+### Unit Tests (`guildlines.backend.md` §16)
+
+- [ ] `OverlapLogicTests` — HasOverlapAsync: overlap, no overlap, exclude cancelled
+
+### Test Cases (`guildlines.testcase.md`)
+
+- [ ] User flow (TC01–TC14)
+- [ ] Admin/Staff flow (TC15–TC49)
+- [ ] System (TC50–TC53)
+- [ ] Giao diện (TC54–TC58)
+
+### Deployment
+
+- [ ] Kiểm tra route matrix quyền truy cập đúng (Guest/User/Staff/Admin)
+- [ ] Kiểm tra FK + index overlap trên SQL Server
+- [ ] Kiểm tra SweetAlert2 + TempData render
+- [ ] Kiểm tra responsive trên mobile (375px)
