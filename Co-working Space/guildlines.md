@@ -98,25 +98,25 @@ Bộ code mẫu bao phủ toàn bộ 13 chức năng (**A.1–A.4, B.1–B.6, C.
 
 ### Database (`guildlines.database.md`)
 
-- [ ] Tạo project + cấu hình SQL Server connection string
-- [ ] Tạo migration / chạy DDL: Rooms, Bookings, BookingApprovals, Equipment, Wallets, RoomEquipment
-- [ ] Thêm FK: Bookings→Rooms, Bookings→AspNetUsers, Approvals→Bookings, Approvals→AspNetUsers, Wallets→AspNetUsers
-- [ ] Thêm index `IX_Bookings_Overlap`
-- [ ] Seed Admin mặc định (`admin@coworking.com` / `Admin@123`)
+- [x] Tạo project + cấu hình SQL Server connection string
+- [x] Tạo migration / chạy DDL: Rooms, Bookings, BookingApprovals, Equipment, Wallets, RoomEquipment
+- [x] Thêm FK: Bookings→Rooms, Bookings→AspNetUsers, Approvals→Bookings, Approvals→AspNetUsers, Wallets→AspNetUsers
+- [x] Thêm index `IX_Bookings_Overlap`
+- [x] Seed Admin mặc định (`admin@coworking.com` / `Admin@123`)
 
 ### Backend Models + DbContext (`guildlines.backend.md` §1–2)
 
-- [ ] `IdGenerator` — service sinh ID tự động
-- [ ] Enums: `BookingStatus`, `EquipmentStatus`, `PaymentStatus`
-- [ ] Models: `Room`, `Booking`, `BookingApproval`, `Equipment`, `RoomEquipment`, `Wallet`
-- [ ] ViewModels: `CreateBookingViewModel`, `RegisterViewModel`, `LoginViewModel`, `ProfileViewModel`
-- [ ] `ApplicationDbContext` — 6 DbSets + cấu hình PK/HK
+- [x] `IdGenerator` — service sinh ID tự động
+- [x] Enums: `BookingStatus`, `EquipmentStatus`, `PaymentStatus`
+- [x] Models: `Room`, `Booking`, `BookingApproval`, `Equipment`, `RoomEquipment`, `Wallet`
+- [x] ViewModels: `CreateBookingViewModel`, `RegisterViewModel`, `LoginViewModel`, `ProfileViewModel`
+- [x] `ApplicationDbContext` — 6 DbSets + cấu hình PK/HK
 
 ### Backend Services (`guildlines.backend.md` §3–5)
 
-- [ ] `BookingService` — `HasOverlapAsync` + `CreateBookingAsync` (Serializable transaction)
-- [ ] `RoomService` — `SearchAsync` (Include RoomEquipments + bộ lọc capacity/location/equipment)
-- [ ] `ApprovalService` — `GetPendingAsync`, `ApproveAsync` (trừ Wallet), `RejectAsync` (hoàn tiền nếu đã trừ)
+- [x] `BookingService` — `HasOverlapAsync` + `CreateBookingAsync` (Serializable transaction)
+- [x] `RoomService` — `SearchAsync` (Include RoomEquipments + bộ lọc capacity/location/equipment)
+- [x] `ApprovalService` — `GetPendingAsync`, `ApproveAsync` (trừ Wallet), `RejectAsync` (hoàn tiền nếu đã trừ)
 
 ### Backend Controllers — User (`guildlines.backend.md` §6–8)
 
@@ -135,10 +135,10 @@ Bộ code mẫu bao phủ toàn bộ 13 chức năng (**A.1–A.4, B.1–B.6, C.
 
 ### Program.cs + Seed (`guildlines.backend.md` §15)
 
-- [ ] Cấu hình DI: DbContext, Identity, Services
-- [ ] Cấu hình Authorization policies: `AdminOnly`, `StaffOrAdmin`
-- [ ] Seed 3 roles (Admin, Staff, User) + Admin default account
-- [ ] Routing: area + default
+- [x] Cấu hình DI: DbContext, Identity, Services
+- [x] Cấu hình Authorization policies: `AdminOnly`, `StaffOrAdmin`
+- [x] Seed 3 roles (Admin, Staff, User) + Admin default account
+- [x] Routing: area + default
 
 ### Frontend Views (`guildlines.frontend.md`)
 
