@@ -120,18 +120,18 @@ Bộ code mẫu bao phủ toàn bộ 13 chức năng (**A.1–A.4, B.1–B.6, C.
 
 ### Backend Controllers — User (`guildlines.backend.md` §6–8)
 
-- [ ] `AccountController` — Register, Login, Logout, Profile (Identity)
-- [ ] `RoomController` — Index (tra cứu + lọc phòng)
-- [ ] `BookingController` — Create, MyBookings, Cancel (chỉ hủy khi Pending)
+- [x] `AccountController` — Register, Login, Logout, Profile (Identity)
+- [x] `RoomController` — Index (tra cứu + lọc phòng)
+- [x] `BookingController` — Create, MyBookings, Cancel (chỉ hủy khi Pending)
 
 ### Backend Controllers — Admin (`guildlines.backend.md` §9–14)
 
-- [ ] `Admin/RoomController` — CRUD phòng + ToggleStatus (Staff xem/toggle, Admin full)
-- [ ] `Admin/EquipmentController` — CRUD thiết bị + UpdateStatus + Transfer
-- [ ] `Admin/BookingController` — Pending + Approve/Reject
-- [ ] `Admin/WalletController` — Index + TopUp
-- [ ] `Admin/UserController` — Index + ResetPassword (Staff→User, Admin→all)
-- [ ] `Admin/DashboardController` — thống kê số đơn + phòng dùng nhiều
+- [x] `Admin/RoomController` — CRUD phòng + ToggleStatus (Staff xem/toggle, Admin full)
+- [x] `Admin/EquipmentController` — CRUD thiết bị + UpdateStatus + Transfer
+- [x] `Admin/BookingController` — Pending + Approve/Reject
+- [x] `Admin/WalletController` — Index + TopUp
+- [x] `Admin/UserController` — Index + ResetPassword (Staff→User, Admin→all)
+- [x] `Admin/DashboardController` — thống kê số đơn + phòng dùng nhiều
 
 ### Program.cs + Seed (`guildlines.backend.md` §15)
 
@@ -151,6 +151,7 @@ Bộ code mẫu bao phủ toàn bộ 13 chức năng (**A.1–A.4, B.1–B.6, C.
 - [ ] `Booking/MyBookings.cshtml` — lịch sử + nút hủy + cột PaymentStatus
 - [ ] `Admin/Room/Index.cshtml` — quản lý phòng + nút Bảo trì
 - [ ] `Admin/Room/Create.cshtml` — thêm phòng + upload ảnh (`enctype`)
+- [ ] `Admin/Room/Edit.cshtml` — sửa phòng + upload ảnh
 - [ ] `Admin/Room/ManageEquipment.cshtml` — gán thiết bị cho phòng
 - [ ] `Admin/Equipment/Index.cshtml` — danh sách + cập nhật trạng thái + nút điều chuyển
 - [ ] `Admin/Equipment/Transfer.cshtml` — form chuyển phòng
