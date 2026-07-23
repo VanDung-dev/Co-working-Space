@@ -1,3 +1,5 @@
 <Solution>
+  <Project Path="Co-working-Space.NUnit-Playwright/Co-working-Space.NUnit-Playwright.csproj" />
+  <Project Path="Co-working-Space.Nunit/Co-working-Space.Nunit.csproj" />
   <Project Path="Co-working-Space/Co-working-Space.csproj" />
 </Solution>
