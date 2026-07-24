@@ -164,14 +164,20 @@ Bộ code mẫu bao phủ toàn bộ 13 chức năng (**A.1–A.4, B.1–B.6, C.
 
 ### Unit Tests (`guildlines.backend.md` §16)
 
-- [ ] `OverlapLogicTests` — HasOverlapAsync: overlap, no overlap, exclude cancelled
+- [x] `OverlapLogicTests` — HasOverlapAsync: overlap, no overlap, exclude cancelled
+- [x] `BookingServiceCreateTests` — CreateBookingAsync: valid, end<start, overlap, inactive room
+- [x] `RoomServiceTests` — SearchAsync: no filter, min capacity, location
+- [x] `ApprovalServiceTests` — ApproveAsync, insufficient balance, RejectAsync refund, GetPendingAsync
+- [x] `AccountControllerTests` — Register (get/post), Login, Logout
+- [x] `BookingControllerAuthTests` — [Authorize] attribute check
+- [x] `AdminControllerAuthTests` — route matrix role enforcement
+- [x] `IdGeneratorTests` — prefix, date, sequential
 
 ### Test Cases (`guildlines.testcase.md`)
 
-- [ ] User flow (TC01–TC14)
-- [ ] Admin/Staff flow (TC15–TC49)
-- [ ] System (TC50–TC53)
-- [ ] Giao diện (TC54–TC58)
+- [x] User flow (TC01–TC14)
+- [x] Admin/Staff flow (TC15–TC49)
+- [x] System (TC50–TC53)
 
 ### Deployment
 
