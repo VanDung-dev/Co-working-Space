@@ -878,28 +878,28 @@ reportgenerator -reports:"**/coverage.cobertura.xml" -targetdir:"CoverageReport"
 ## 8. Checklist Test
 
 ### Services
-- [ ] `BookingServiceTests.cs` — HasOverlapAsync (5+ test cases)
-- [ ] `BookingServiceCreateTests.cs` — CreateBookingAsync (5+ test cases)
-- [ ] `RoomServiceTests.cs` — SearchAsync (3+ test cases)
-- [ ] `ApprovalServiceTests.cs` — ApproveAsync, RejectAsync, GetPendingAsync (5+ test cases)
+- [x] `BookingServiceTests.cs` — HasOverlapAsync (5+ test cases)
+- [x] `BookingServiceCreateTests.cs` — CreateBookingAsync (5+ test cases)
+- [x] `RoomServiceTests.cs` — SearchAsync (3+ test cases)
+- [x] `ApprovalServiceTests.cs` — ApproveAsync, RejectAsync, GetPendingAsync (5+ test cases)
 
 ### Controllers — User
-- [ ] `AccountControllerTests.cs` — Register, Login, Logout, Profile
-- [ ] `BookingControllerTests.cs` — Create, MyBookings, Cancel
-- [ ] `RoomControllerTests.cs` — Index with filters
+- [x] `AccountControllerTests.cs` — Register, Login, Logout, Profile
+- [x] `BookingControllerTests.cs` — Create, MyBookings, Cancel
+- [x] `RoomControllerTests.cs` — Index with filters
 
 ### Controllers — Admin
-- [ ] `AdminRoomControllerTests.cs` — Index, Create, Edit, ToggleStatus, ManageEquipment
-- [ ] `AdminEquipmentControllerTests.cs` — Index, Create, Delete, UpdateStatus, Transfer
-- [ ] `AdminBookingControllerTests.cs` — Pending, Approve, Reject
-- [ ] `AdminWalletControllerTests.cs` — Index, TopUp
-- [ ] `AdminUserControllerTests.cs` — Index, ResetPassword
-- [ ] `AdminDashboardControllerTests.cs` — Index
+- [x] `AdminRoomControllerTests.cs` — Index, Create, Edit, ToggleStatus, ManageEquipment
+- [x] `AdminEquipmentControllerTests.cs` — Index, Create, Delete, UpdateStatus, Transfer
+- [x] `AdminBookingControllerTests.cs` — Pending, Approve, Reject
+- [x] `AdminWalletControllerTests.cs` — Index, TopUp
+- [x] `AdminUserControllerTests.cs` — Index, ResetPassword
+- [x] `AdminDashboardControllerTests.cs` — Index
 
 ### Security & Auth
-- [ ] `AdminControllerAuthTests.cs` — Route matrix enforcement
-- [ ] `BookingControllerAuthTests.cs` — [Authorize] check
-- [ ] `AdminActionAuthTests.cs` — Admin-only actions
+- [x] `AdminControllerAuthTests.cs` — Route matrix enforcement
+- [x] `BookingControllerAuthTests.cs` — [Authorize] check
+- [x] `AdminActionAuthTests.cs` — Admin-only actions
 
 ### Helpers
-- [ ] `IdGeneratorTests.cs` — prefix, date, sequential
+- [x] `IdGeneratorTests.cs` — prefix, date, sequential
