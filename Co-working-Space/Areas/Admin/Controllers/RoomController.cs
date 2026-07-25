@@ -73,15 +73,18 @@ public class RoomController : Controller
     public async Task<IActionResult> Edit(Room room, IFormFile? imageFile)
     {
         if (!ModelState.IsValid) return View(room);
-        var existing = await _context.Rooms.AsNoTracking().FirstOrDefaultAsync(r => r.Id == room.Id);
+        var existing = await _context.Rooms.FindAsync(room.Id);
         if (existing == null) return NotFound();
 
-        if (imageFile != null)
-            room.ImageUrl = await SaveImageAsync(imageFile);
-        else
-            room.ImageUrl = existing.ImageUrl;
+        existing.Name = room.Name;
+        existing.Location = room.Location;
+        existing.Capacity = room.Capacity;
+        existing.PricePerHour = room.PricePerHour;
+        existing.Description = room.Description;
 
-        _context.Rooms.Update(room);
+        if (imageFile != null)
+            existing.ImageUrl = await SaveImageAsync(imageFile);
+
         await _context.SaveChangesAsync();
         TempData["SuccessMessage"] = "Đã cập nhật phòng.";
         return RedirectToAction("Index");
