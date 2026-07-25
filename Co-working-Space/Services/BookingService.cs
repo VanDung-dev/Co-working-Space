@@ -22,7 +22,8 @@ public class BookingService : IBookingService
 
     public async Task<string?> CreateBookingAsync(CreateBookingViewModel model, string userId)
     {
-        if (model.StartTime >= model.EndTime || model.StartTime <= DateTime.UtcNow)
+        if (model.StartTime >= model.EndTime ||
+            DateTime.SpecifyKind(model.StartTime, DateTimeKind.Utc) <= DateTime.UtcNow)
             return null;
 
         var room = await _context.Rooms.FindAsync(model.RoomId);
