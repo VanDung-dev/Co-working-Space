@@ -49,11 +49,13 @@ public class WalletController : Controller
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> TopUp(string userId, decimal amount)
     {
+        var user = await _userManager.FindByIdAsync(userId);
+        if (user == null) return NotFound();
+
         if (amount <= 0)
         {
             ModelState.AddModelError("", "Số tiền phải lớn hơn 0.");
-            var user = await _userManager.FindByIdAsync(userId);
-            ViewBag.UserEmail = user!.Email;
+            ViewBag.UserEmail = user.Email;
             ViewBag.CurrentBalance = (await _context.Wallets.FindAsync(userId))?.Balance ?? 0;
             return View();
         }
