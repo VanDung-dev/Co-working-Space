@@ -178,6 +178,7 @@ Bộ code mẫu bao phủ toàn bộ 13 chức năng (**A.1–A.4, B.1–B.6, C.
 - [x] User flow (TC01–TC14)
 - [x] Admin/Staff flow (TC15–TC49)
 - [x] System (TC50–TC53)
+- [ ] Giao diện (TC54–TC58)
 
 ### Deployment
 
