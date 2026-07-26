@@ -14,10 +14,13 @@ docker compose -f docker-compose.db.yaml up -d
 # 2. Build
 dotnet build
 
-# 3. Create database + apply migrations
-dotnet ef database update
+# 3. Create migrations
+dotnet ef migrations add InitialCreate --project Co-working-Space/Co-working-Space.csproj
 
-# 4. Run
+# 4. Create database + apply migrations
+dotnet ef database update --project Co-working-Space/Co-working-Space.csproj
+
+# 5. Run
 dotnet run --project Co-working-Space/Co-working-Space.csproj
 ```
 
