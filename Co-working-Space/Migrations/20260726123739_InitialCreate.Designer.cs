@@ -12,7 +12,7 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace Co_working_Space.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    [Migration("20260722145449_InitialCreate")]
+    [Migration("20260726123739_InitialCreate")]
     partial class InitialCreate
     {
         /// <inheritdoc />
@@ -20,7 +20,7 @@ namespace Co_working_Space.Migrations
         {
 #pragma warning disable 612, 618
             modelBuilder
-                .HasAnnotation("ProductVersion", "10.0.10")
+                .HasAnnotation("ProductVersion", "10.0.0")
                 .HasAnnotation("Relational:MaxIdentifierLength", 128);
 
             SqlServerModelBuilderExtensions.UseIdentityColumns(modelBuilder);
@@ -64,9 +64,11 @@ namespace Co_working_Space.Migrations
 
                     b.Property<string>("UserId")
                         .IsRequired()
-                        .HasColumnType("nvarchar(max)");
+                        .HasColumnType("nvarchar(450)");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("UserId");
 
                     b.HasIndex("RoomId", "Status", "StartTime", "EndTime")
                         .HasDatabaseName("IX_Bookings_Overlap");
@@ -84,7 +86,7 @@ namespace Co_working_Space.Migrations
 
                     b.Property<string>("ApproverId")
                         .IsRequired()
-                        .HasColumnType("nvarchar(max)");
+                        .HasColumnType("nvarchar(450)");
 
                     b.Property<string>("BookingId")
                         .IsRequired()
@@ -97,6 +99,8 @@ namespace Co_working_Space.Migrations
                         .HasColumnType("int");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("ApproverId");
 
                     b.HasIndex("BookingId");
 
@@ -393,16 +397,32 @@ namespace Co_working_Space.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
+                    b.HasOne("Microsoft.AspNetCore.Identity.IdentityUser", "User")
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.NoAction)
+                        .IsRequired();
+
                     b.Navigation("Room");
+
+                    b.Navigation("User");
                 });
 
             modelBuilder.Entity("Co_working_Space.Models.BookingApproval", b =>
                 {
+                    b.HasOne("Microsoft.AspNetCore.Identity.IdentityUser", "Approver")
+                        .WithMany()
+                        .HasForeignKey("ApproverId")
+                        .OnDelete(DeleteBehavior.NoAction)
+                        .IsRequired();
+
                     b.HasOne("Co_working_Space.Models.Booking", "Booking")
                         .WithMany()
                         .HasForeignKey("BookingId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
+
+                    b.Navigation("Approver");
 
                     b.Navigation("Booking");
                 });

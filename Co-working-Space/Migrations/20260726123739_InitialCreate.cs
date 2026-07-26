@@ -212,7 +212,7 @@ namespace Co_working_Space.Migrations
                 columns: table => new
                 {
                     Id = table.Column<string>(type: "nvarchar(450)", nullable: false),
-                    UserId = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    UserId = table.Column<string>(type: "nvarchar(450)", nullable: false),
                     RoomId = table.Column<string>(type: "nvarchar(450)", nullable: false),
                     Title = table.Column<string>(type: "nvarchar(max)", nullable: false),
                     Description = table.Column<string>(type: "nvarchar(max)", nullable: true),
@@ -227,6 +227,11 @@ namespace Co_working_Space.Migrations
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_Bookings", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_Bookings_AspNetUsers_UserId",
+                        column: x => x.UserId,
+                        principalTable: "AspNetUsers",
+                        principalColumn: "Id");
                     table.ForeignKey(
                         name: "FK_Bookings_Rooms_RoomId",
                         column: x => x.RoomId,
@@ -265,7 +270,7 @@ namespace Co_working_Space.Migrations
                 {
                     Id = table.Column<string>(type: "nvarchar(450)", nullable: false),
                     BookingId = table.Column<string>(type: "nvarchar(450)", nullable: false),
-                    ApproverId = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    ApproverId = table.Column<string>(type: "nvarchar(450)", nullable: false),
                     Status = table.Column<int>(type: "int", nullable: false),
                     Reason = table.Column<string>(type: "nvarchar(max)", nullable: true),
                     ApprovedAt = table.Column<DateTime>(type: "datetime2", nullable: false)
@@ -273,6 +278,11 @@ namespace Co_working_Space.Migrations
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_BookingApprovals", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_BookingApprovals_AspNetUsers_ApproverId",
+                        column: x => x.ApproverId,
+                        principalTable: "AspNetUsers",
+                        principalColumn: "Id");
                     table.ForeignKey(
                         name: "FK_BookingApprovals_Bookings_BookingId",
                         column: x => x.BookingId,
@@ -321,6 +331,11 @@ namespace Co_working_Space.Migrations
                 filter: "[NormalizedUserName] IS NOT NULL");
 
             migrationBuilder.CreateIndex(
+                name: "IX_BookingApprovals_ApproverId",
+                table: "BookingApprovals",
+                column: "ApproverId");
+
+            migrationBuilder.CreateIndex(
                 name: "IX_BookingApprovals_BookingId",
                 table: "BookingApprovals",
                 column: "BookingId");
@@ -329,6 +344,11 @@ namespace Co_working_Space.Migrations
                 name: "IX_Bookings_Overlap",
                 table: "Bookings",
                 columns: new[] { "RoomId", "Status", "StartTime", "EndTime" });
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Bookings_UserId",
+                table: "Bookings",
+                column: "UserId");
 
             migrationBuilder.CreateIndex(
                 name: "IX_RoomEquipments_EquipmentId",
