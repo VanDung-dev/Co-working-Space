@@ -29,7 +29,7 @@ public class ApplicationDbContext : IdentityDbContext<IdentityUser>
         {
             entity.Property(b => b.TotalPrice).HasColumnType("decimal(18,2)");
             entity.HasOne(b => b.Room).WithMany(r => r.Bookings).HasForeignKey(b => b.RoomId);
-
+            entity.HasOne(b => b.User).WithMany().HasForeignKey(b => b.UserId).OnDelete(DeleteBehavior.NoAction);
             entity.HasIndex(b => new { b.RoomId, b.Status, b.StartTime, b.EndTime })
                   .HasDatabaseName("IX_Bookings_Overlap");
         });
@@ -37,6 +37,7 @@ public class ApplicationDbContext : IdentityDbContext<IdentityUser>
         builder.Entity<BookingApproval>(entity =>
         {
             entity.HasOne(a => a.Booking).WithMany().HasForeignKey(a => a.BookingId);
+            entity.HasOne(a => a.Approver).WithMany().HasForeignKey(a => a.ApproverId).OnDelete(DeleteBehavior.NoAction);
         });
 
         builder.Entity<RoomEquipment>(entity =>
