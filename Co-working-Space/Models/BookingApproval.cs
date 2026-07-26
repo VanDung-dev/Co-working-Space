@@ -1,3 +1,5 @@
+using Microsoft.AspNetCore.Identity;
+
 namespace Co_working_Space.Models;
 
 public class BookingApproval
@@ -9,4 +11,5 @@ public class BookingApproval
     public string? Reason { get; set; }
     public DateTime ApprovedAt { get; set; }
     public Booking Booking { get; set; } = null!;
+    public IdentityUser? Approver { get; set; }
 }

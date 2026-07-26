@@ -1,4 +1,5 @@
 using Co_working_Space.Models.Enums;
+using Microsoft.AspNetCore.Identity;
 
 namespace Co_working_Space.Models;
 
@@ -17,4 +18,5 @@ public class Booking
     public PaymentStatus PaymentStatus { get; set; } = PaymentStatus.Unpaid;
     public DateTime? PaidAt { get; set; }
     public Room? Room { get; set; }
+    public IdentityUser? User { get; set; }
 }
