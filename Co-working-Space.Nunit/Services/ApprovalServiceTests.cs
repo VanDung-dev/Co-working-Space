@@ -16,6 +16,7 @@ public class ApprovalServiceTests
             .Options;
         var db = new ApplicationDbContext(options);
 
+        db.Users.Add(new Microsoft.AspNetCore.Identity.IdentityUser { Id = "USR-0001", UserName = "user1@example.com", Email = "user1@example.com" });
         db.Rooms.Add(new Room { Id = "RM-M-001", Name = "Phòng A", Capacity = 6, PricePerHour = 100_000, IsActive = true });
         db.Bookings.Add(new Booking
         {
