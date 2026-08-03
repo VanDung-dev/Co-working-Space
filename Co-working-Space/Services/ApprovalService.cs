@@ -14,6 +14,7 @@ public class ApprovalService : IApprovalService
     {
         return await _context.Bookings
             .Include(b => b.Room)
+            .Include(b => b.User)
             .Where(b => b.Status == BookingStatus.Pending)
             .OrderBy(b => b.StartTime)
             .ToListAsync();
