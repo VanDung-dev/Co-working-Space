@@ -1,0 +1,93 @@
+@model List<Co_working_Space.Models.Room>
+
+@{
+    ViewData["Title"] = "Danh sách phòng họp";
+    var roomLabel = new Dictionary<string, string> {
+        { "RM-S-", "Small" }, { "RM-M-", "Medium" }, { "RM-L-", "Large" }, { "RM-V-", "VIP" }
+    };
+}
+
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h4 class="mb-0">Danh sách phòng họp</h4>
+</div>
+
+<form method="get" class="row g-2 mb-4 align-items-center">
+    <div class="col-auto">
+        <select name="minCapacity" class="form-select form-select-sm">
+            <option value="">Sức chứa: tất cả</option>
+            <option value="2" selected="@(Context.Request.Query["minCapacity"].ToString() == "2")">2 người trở lên</option>
+            <option value="5" selected="@(Context.Request.Query["minCapacity"].ToString() == "5")">5 người trở lên</option>
+            <option value="9" selected="@(Context.Request.Query["minCapacity"].ToString() == "9")">9 người trở lên</option>
+        </select>
+    </div>
+    <div class="col-auto">
+        <input name="location" class="form-control form-control-sm" placeholder="Vị trí, tầng..." value="@Context.Request.Query["location"]" />
+    </div>
+    <div class="col-auto">
+        <button type="submit" class="btn btn-primary btn-sm">Lọc</button>
+        <a asp-action="Index" class="btn btn-outline-secondary btn-sm">Bỏ lọc</a>
+    </div>
+</form>
+
+@if (!Model.Any())
+{
+    <div class="text-center text-muted py-5">
+        <p class="mb-1 fw-semibold">Không có phòng nào phù hợp.</p>
+        <a asp-action="Index" class="btn btn-outline-secondary btn-sm">Xem tất cả phòng</a>
+    </div>
+}
+else
+{
+    <div class="row g-3">
+        @foreach (var room in Model)
+        {
+            var prefix = room.Id.Length >= 5 ? room.Id[..5] : "";
+            var availableEquipment = room.RoomEquipments?
+                .Where(re => re.Equipment?.Status == EquipmentStatus.Available)
+                .ToList() ?? new();
+
+            <div class="col-md-6 col-lg-4">
+                <div class="card h-100">
+                    @if (!string.IsNullOrEmpty(room.ImageUrl))
+                    {
+                        <img src="@room.ImageUrl" class="card-img-top" alt="@room.Name"
+                             style="height: 170px; object-fit: cover; border-radius: var(--radius) var(--radius) 0 0;" />
+                    }
+                    else
+                    {
+                        <div class="d-flex align-items-center justify-content-center bg-light"
+                             style="height: 170px; border-radius: var(--radius) var(--radius) 0 0; color: var(--gray-500); font-weight: 600;">
+                            @room.Name
+                        </div>
+                    }
+                    <div class="card-body d-flex flex-column p-3">
+                        <div class="d-flex justify-content-between align-items-start mb-1 gap-2">
+                            <h6 class="mb-0">@room.Name</h6>
+                            @if (roomLabel.TryGetValue(prefix, out var label))
+                            {
+                                <span class="badge badge-room">@label</span>
+                            }
+                        </div>
+                        <p class="text-muted small mb-2">@room.Location · @room.Capacity người</p>
+
+                        @if (availableEquipment.Any())
+                        {
+                            <div class="mb-3">
+                                @foreach (var re in availableEquipment)
+                                {
+                                    <span class="badge badge-simple me-1">@re.Equipment!.Name</span>
+                                }
+                            </div>
+                        }
+
+                        <div class="d-flex justify-content-between align-items-center mt-auto">
+                            <span class="fw-semibold text-primary">@room.PricePerHour.ToString("N0") đ/giờ</span>
+                            <a asp-action="Create" asp-controller="Booking" asp-route-roomId="@room.Id"
+                               class="btn btn-primary btn-sm">Đặt phòng</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        }
+    </div>
+}

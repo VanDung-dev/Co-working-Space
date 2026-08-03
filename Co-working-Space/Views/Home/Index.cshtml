@@ -1,8 +1,34 @@
 ﻿@{
-    ViewData["Title"] = "Home Page";
+    ViewData["Title"] = "Trang chủ";
 }
 
-<div class="text-center">
-    <h1 class="display-4">Welcome</h1>
-    <p>Learn about <a href="https://learn.microsoft.com/aspnet/core">building Web apps with ASP.NET Core</a>.</p>
-</div>
+<section class="py-5 text-center">
+    <h1 class="display-5 fw-bold mb-3">Phòng họp ngay khi bạn cần</h1>
+    <p class="text-muted mx-auto mb-4" style="max-width: 560px;">
+        Đặt phòng họp theo giờ trong vài bước. Chọn phòng, chọn thời gian,
+        gửi yêu cầu và chờ duyệt — không cần thao tác phức tạp.
+    </p>
+    <a asp-controller="Room" asp-action="Index" class="btn btn-primary btn-lg px-4">Xem phòng và đặt</a>
+</section>
+
+<section class="row g-4 py-4">
+    <div class="col-md-4">
+        <h6 class="fw-bold mb-1">Đặt theo giờ</h6>
+        <p class="text-muted small mb-0">Chọn thời gian phù hợp, chỉ trả tiền cho đúng khoảng thời gian sử dụng.</p>
+    </div>
+    <div class="col-md-4">
+        <h6 class="fw-bold mb-1">Thiết bị sẵn sàng</h6>
+        <p class="text-muted small mb-0">Máy chiếu, màn hình, micro… được gắn sẵn theo phòng và kiểm tra định kỳ.</p>
+    </div>
+    <div class="col-md-4">
+        <h6 class="fw-bold mb-1">Duyệt nhanh</h6>
+        <p class="text-muted small mb-0">Yêu cầu được xử lý theo thứ tự, trạng thái luôn hiển thị rõ ràng.</p>
+    </div>
+</section>
+
+@if (!User.Identity!.IsAuthenticated)
+{
+    <section class="text-center py-4">
+        <a asp-controller="Account" asp-action="Register" class="btn btn-outline-secondary px-4">Tạo tài khoản để đặt phòng</a>
+    </section>
+}

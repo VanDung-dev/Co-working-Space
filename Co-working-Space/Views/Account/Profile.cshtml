@@ -1,0 +1,29 @@
+@model Co_working_Space.Models.ViewModels.ProfileViewModel
+
+@{
+    ViewData["Title"] = "Hồ sơ";
+}
+
+<div class="row justify-content-center">
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-body p-4">
+                <h5 class="mb-4">Hồ sơ của tôi</h5>
+                <form asp-action="Profile" method="post">
+                    <div asp-validation-summary="ModelOnly" class="alert alert-danger py-2 small"></div>
+
+                    <div class="mb-3">
+                        <label class="form-label">Email</label>
+                        <input class="form-control bg-light" value="@Model.Email" readonly disabled />
+                    </div>
+                    <div class="mb-4">
+                        <label asp-for="PhoneNumber" class="form-label">Số điện thoại</label>
+                        <input asp-for="PhoneNumber" type="tel" class="form-control" placeholder="0xxxxxxxxx" />
+                    </div>
+
+                    <button type="submit" class="btn btn-primary">Cập nhật</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>

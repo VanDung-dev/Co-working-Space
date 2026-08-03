@@ -1,0 +1,75 @@
+@model Co_working_Space.Models.ViewModels.CreateBookingViewModel
+
+@{
+    ViewData["Title"] = "Đặt phòng họp";
+}
+
+<div class="row justify-content-center">
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-body p-4">
+                <h5 class="mb-4">Tạo yêu cầu đặt phòng</h5>
+                <form asp-action="Create" method="post" id="bookingForm">
+                    <div asp-validation-summary="ModelOnly" class="alert alert-danger py-2 small"></div>
+                    <input type="hidden" asp-for="RoomId" value="@ViewBag.RoomId" />
+
+                    <div class="mb-3">
+                        <label asp-for="Title" class="form-label">Tiêu đề cuộc họp</label>
+                        <input asp-for="Title" class="form-control" placeholder="VD: Họp báo cáo tuần" required />
+                    </div>
+
+                    <div class="row g-2 mb-3">
+                        <div class="col-md-6">
+                            <label asp-for="StartTime" class="form-label">Bắt đầu</label>
+                            <input asp-for="StartTime" type="datetime-local" class="form-control" id="startTime"
+                                   value="@(Model.StartTime > DateTime.MinValue ? Model.StartTime.ToString("yyyy-MM-ddTHH:mm") : "")" required />
+                        </div>
+                        <div class="col-md-6">
+                            <label asp-for="EndTime" class="form-label">Kết thúc</label>
+                            <input asp-for="EndTime" type="datetime-local" class="form-control" id="endTime"
+                                   value="@(Model.EndTime > DateTime.MinValue ? Model.EndTime.ToString("yyyy-MM-ddTHH:mm") : "")" required />
+                        </div>
+                    </div>
+                    <div id="timeError" class="invalid-feedback d-block mb-2 d-none"></div>
+
+                    <div class="mb-4">
+                        <label asp-for="Description" class="form-label">Ghi chú</label>
+                        <textarea asp-for="Description" class="form-control" rows="3" placeholder="Yêu cầu thêm nước uống, micro..." required></textarea>
+                    </div>
+
+                    <button type="submit" class="btn btn-primary w-100" id="submitBtn">Gửi yêu cầu</button>
+                    <a asp-action="Index" asp-controller="Room" class="btn btn-outline-secondary w-100 mt-2">Quay lại</a>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        const startEl = document.getElementById('startTime');
+        const endEl = document.getElementById('endTime');
+        const errEl = document.getElementById('timeError');
+
+        function validate() {
+            if (!startEl.value || !endEl.value) return true;
+            const start = new Date(startEl.value);
+            const end = new Date(endEl.value);
+            const now = new Date();
+            if (start <= now) { errEl.textContent = 'Thời gian bắt đầu phải ở tương lai.'; errEl.classList.remove('d-none'); return false; }
+            if (end <= start) { errEl.textContent = 'Thời gian kết thúc phải sau thời gian bắt đầu.'; errEl.classList.remove('d-none'); return false; }
+            errEl.classList.add('d-none');
+            return true;
+        }
+
+        startEl.addEventListener('change', validate);
+        endEl.addEventListener('change', validate);
+
+        document.getElementById('bookingForm').addEventListener('submit', function(e) {
+            if (!validate()) { e.preventDefault(); return; }
+            const btn = document.getElementById('submitBtn');
+            btn.disabled = true;
+            btn.textContent = 'Đang gửi...';
+        });
+    </script>
+}

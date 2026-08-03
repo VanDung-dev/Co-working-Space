@@ -1,0 +1,103 @@
+@model List<Co_working_Space.Models.Booking>
+
+@{
+    ViewData["Title"] = "Lịch sử đặt phòng";
+    var st = new Dictionary<BookingStatus, string> {
+        { BookingStatus.Pending, "Chờ duyệt" }, { BookingStatus.Approved, "Đã duyệt" },
+        { BookingStatus.Rejected, "Từ chối" }, { BookingStatus.Cancelled, "Đã hủy" }
+    };
+    var sb = new Dictionary<BookingStatus, string> {
+        { BookingStatus.Pending, "badge-pending" }, { BookingStatus.Approved, "badge-approved" },
+        { BookingStatus.Rejected, "badge-rejected" }, { BookingStatus.Cancelled, "badge-cancelled" }
+    };
+    var pt = new Dictionary<PaymentStatus, string> {
+        { PaymentStatus.Unpaid, "Chưa thanh toán" }, { PaymentStatus.Paid, "Đã thanh toán" },
+        { PaymentStatus.Refunded, "Đã hoàn tiền" }
+    };
+    var pb = new Dictionary<PaymentStatus, string> {
+        { PaymentStatus.Unpaid, "badge-unpaid" }, { PaymentStatus.Paid, "badge-paid" },
+        { PaymentStatus.Refunded, "badge-refunded" }
+    };
+}
+
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h4 class="mb-0">Lịch sử đặt phòng</h4>
+    <a asp-action="Index" asp-controller="Room" class="btn btn-primary btn-sm">Đặt phòng mới</a>
+</div>
+
+@if (!Model.Any())
+{
+    <div class="text-center text-muted py-5">
+        <p class="mb-1 fw-semibold">Bạn chưa có đơn đặt phòng nào.</p>
+        <a asp-action="Index" asp-controller="Room" class="btn btn-outline-secondary btn-sm">Đặt phòng đầu tiên</a>
+    </div>
+}
+else
+{
+    <div class="card p-0 overflow-hidden">
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+                <thead>
+                    <tr>
+                        <th>Phòng</th>
+                        <th>Tiêu đề</th>
+                        <th>Bắt đầu</th>
+                        <th>Kết thúc</th>
+                        <th class="text-end">Giá</th>
+                        <th>Trạng thái</th>
+                        <th>Thanh toán</th>
+                        <th></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var b in Model)
+                    {
+                        <tr>
+                            <td class="fw-medium">@b.Room?.Name</td>
+                            <td>@b.Title</td>
+                            <td class="text-nowrap">@b.StartTime.ToLocalTime().ToString("dd/MM HH:mm")</td>
+                            <td class="text-nowrap">@b.EndTime.ToLocalTime().ToString("HH:mm")</td>
+                            <td class="text-end text-nowrap">@b.TotalPrice.ToString("N0") đ</td>
+                            <td><span class="badge @sb[b.Status]">@st[b.Status]</span></td>
+                            <td><span class="badge @pb[b.PaymentStatus]">@pt[b.PaymentStatus]</span></td>
+                            <td class="text-end">
+                                @if (b.Status == BookingStatus.Pending)
+                                {
+                                    <button type="button" class="btn btn-outline-danger btn-sm"
+                                            onclick="confirmCancel('@b.Id', '@b.Room?.Name')">Hủy</button>
+                                }
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+}
+
+@section Scripts {
+    <script>
+        function confirmCancel(id, roomName) {
+            Swal.fire({
+                title: 'Hủy đặt phòng?',
+                text: `Hủy đơn tại ${roomName}?`,
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonText: 'Hủy đơn',
+                cancelButtonText: 'Giữ lại',
+                confirmButtonColor: '#dc2626'
+            }).then(r => {
+                if (!r.isConfirmed) return;
+                const f = document.createElement('form');
+                f.method = 'post';
+                f.action = `/Booking/Cancel/${id}`;
+                const token = document.createElement('input');
+                token.name = '__RequestVerificationToken';
+                token.value = '@Html.AntiForgeryToken()'.match(/value="([^"]+)"/)?.[1] || '';
+                f.appendChild(token);
+                document.body.appendChild(f);
+                f.submit();
+            });
+        }
+    </script>
+}
