@@ -1,3 +1,4 @@
+using Co_working_Space.Data;
 using Co_working_Space.Models.ViewModels;
 using Co_working_Space.Services;
 using Microsoft.AspNetCore.Authorization;
@@ -10,11 +11,13 @@ public class AccountController : Controller
 {
     private readonly UserManager<IdentityUser> _userManager;
     private readonly SignInManager<IdentityUser> _signInManager;
+    private readonly ApplicationDbContext? _context;
 
-    public AccountController(UserManager<IdentityUser> userManager, SignInManager<IdentityUser> signInManager)
+    public AccountController(UserManager<IdentityUser> userManager, SignInManager<IdentityUser> signInManager, ApplicationDbContext? context = null)
     {
         _userManager = userManager;
         _signInManager = signInManager;
+        _context = context;
     }
 
     [HttpGet]
@@ -56,7 +59,22 @@ public class AccountController : Controller
         if (!ModelState.IsValid) return View(model);
 
         var result = await _signInManager.PasswordSignInAsync(model.Email, model.Password, model.RememberMe, false);
-        if (result.Succeeded) return RedirectToAction("Index", "Home");
+        if (result.Succeeded)
+        {
+            var user = await _userManager.FindByEmailAsync(model.Email);
+            if (user != null)
+            {
+                if (await _userManager.IsInRoleAsync(user, "Admin"))
+                {
+                    return RedirectToAction("Index", "Dashboard", new { area = "Admin" });
+                }
+                if (await _userManager.IsInRoleAsync(user, "Staff"))
+                {
+                    return RedirectToAction("Pending", "Booking", new { area = "Admin" });
+                }
+            }
+            return RedirectToAction("Index", "Home");
+        }
 
         ModelState.AddModelError("", "Đăng nhập không hợp lệ.");
         return View(model);
@@ -75,10 +93,24 @@ public class AccountController : Controller
     public async Task<IActionResult> Profile()
     {
         var user = await _userManager.GetUserAsync(User);
+        if (user == null) return NotFound();
+
+        decimal balance = 0;
+        if (_context != null)
+        {
+            var wallet = await _context.Wallets.FindAsync(user.Id);
+            balance = wallet?.Balance ?? 0;
+        }
+
+        var roles = await _userManager.GetRolesAsync(user);
+
         return View(new ProfileViewModel
         {
-            Email = user!.Email!,
-            PhoneNumber = user.PhoneNumber ?? ""
+            UserId = user.Id,
+            Email = user.Email!,
+            PhoneNumber = user.PhoneNumber ?? "",
+            Balance = balance,
+            Roles = roles?.ToList() ?? new List<string>()
         });
     }
 

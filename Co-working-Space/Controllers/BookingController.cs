@@ -23,16 +23,28 @@ public class BookingController : Controller
     }
 
     [HttpGet]
-    public IActionResult Create(string roomId)
+    public async Task<IActionResult> Create(string roomId)
     {
+        var room = await _context.Rooms.FindAsync(roomId);
+        ViewBag.Room = room;
         ViewBag.RoomId = roomId;
-        return View();
+        var model = new CreateBookingViewModel
+        {
+            RoomId = roomId,
+            StartTime = DateTime.Now.AddHours(1),
+            EndTime = DateTime.Now.AddHours(2)
+        };
+        return View(model);
     }
 
     [HttpPost]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> Create(CreateBookingViewModel model)
     {
+        var room = await _context.Rooms.FindAsync(model.RoomId);
+        ViewBag.Room = room;
+        ViewBag.RoomId = model.RoomId;
+
         if (!ModelState.IsValid) return View(model);
 
         var userId = User.FindFirstValue(ClaimTypes.NameIdentifier)!;
@@ -54,6 +66,7 @@ public class BookingController : Controller
         var userId = User.FindFirstValue(ClaimTypes.NameIdentifier)!;
         var bookings = await _context.Bookings
             .Include(b => b.Room)
+            .Include(b => b.Approvals)
             .Where(b => b.UserId == userId)
             .OrderByDescending(b => b.CreatedAt)
             .ToListAsync();
