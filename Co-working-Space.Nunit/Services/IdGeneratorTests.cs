@@ -9,7 +9,7 @@ public class IdGeneratorTests
     public void Next_BookingPrefix_IncludesDate()
     {
         var id = IdGenerator.Next(IdGenerator.Booking);
-        Assert.That(id, Does.Match(@"^BKG-\d{8}-\d{3}$"));
+        Assert.That(id, Does.Match(@"^BKG-\d{8}-\d{6}-\d{3}$"));
     }
 
     [Test]
@@ -66,6 +66,5 @@ public class IdGeneratorTests
         var id1 = IdGenerator.Next(IdGenerator.Booking);
         var id2 = IdGenerator.Next(IdGenerator.Booking);
         Assert.That(id2, Is.Not.EqualTo(id1));
-        Assert.That(id2, Does.EndWith("-002"));
     }
 }

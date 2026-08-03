@@ -50,9 +50,9 @@ public class BookingControllerTests
 
 
     [Test]
-    public void Create_Get_SetsViewBagRoomId()
+    public async Task Create_Get_SetsViewBagRoomId()
     {
-        var result = _controller.Create("RM-M-001");
+        var result = await _controller.Create("RM-M-001");
 
         Assert.That(result, Is.InstanceOf<ViewResult>());
         Assert.That(_controller.ViewBag.RoomId, Is.EqualTo("RM-M-001"));
