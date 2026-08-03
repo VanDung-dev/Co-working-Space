@@ -35,27 +35,6 @@ if (!app.Environment.IsDevelopment())
     app.UseHsts();
 }
 
-using (var scope = app.Services.CreateScope())
-{
-    var roleManager = scope.ServiceProvider.GetRequiredService<RoleManager<IdentityRole>>();
-    var userManager = scope.ServiceProvider.GetRequiredService<UserManager<IdentityUser>>();
-
-    foreach (var role in new[] { "Admin", "Staff", "User" })
-        if (!await roleManager.RoleExistsAsync(role))
-            await roleManager.CreateAsync(new IdentityRole(role));
-
-    if (await userManager.FindByEmailAsync("admin@coworking.com") == null)
-    {
-        var admin = new IdentityUser
-        {
-            Id = IdGenerator.Next(IdGenerator.Admin),
-            UserName = "admin@coworking.com",
-            Email = "admin@coworking.com"
-        };
-        await userManager.CreateAsync(admin, "Admin@123");
-        await userManager.AddToRoleAsync(admin, "Admin");
-    }
-}
 
 app.UseHttpsRedirection();
 app.UseStaticFiles();
