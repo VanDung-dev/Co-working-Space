@@ -40,33 +40,90 @@ else
             <table class="table table-hover align-middle mb-0">
                 <thead>
                     <tr>
+                        <th>Mã đơn</th>
                         <th>Phòng</th>
                         <th>Tiêu đề</th>
-                        <th>Bắt đầu</th>
-                        <th>Kết thúc</th>
+                        <th>Thời gian</th>
                         <th class="text-end">Giá</th>
                         <th>Trạng thái</th>
                         <th>Thanh toán</th>
-                        <th></th>
+                        <th class="text-end">Thao tác</th>
                     </tr>
                 </thead>
                 <tbody>
                     @foreach (var b in Model)
                     {
+                        var rejectionReason = b.Approvals?.LastOrDefault(a => a.Status == 2)?.Reason;
                         <tr>
+                            <td><code>@b.Id</code></td>
                             <td class="fw-medium">@b.Room?.Name</td>
                             <td>@b.Title</td>
-                            <td class="text-nowrap">@b.StartTime.ToLocalTime().ToString("dd/MM HH:mm")</td>
-                            <td class="text-nowrap">@b.EndTime.ToLocalTime().ToString("HH:mm")</td>
-                            <td class="text-end text-nowrap">@b.TotalPrice.ToString("N0") đ</td>
+                            <td class="text-nowrap">@b.StartTime.ToLocalTime().ToString("dd/MM HH:mm") - @b.EndTime.ToLocalTime().ToString("HH:mm")</td>
+                            <td class="text-end text-nowrap fw-semibold text-success">@b.TotalPrice.ToString("N0") đ</td>
                             <td><span class="badge @sb[b.Status]">@st[b.Status]</span></td>
                             <td><span class="badge @pb[b.PaymentStatus]">@pt[b.PaymentStatus]</span></td>
                             <td class="text-end">
-                                @if (b.Status == BookingStatus.Pending)
-                                {
-                                    <button type="button" class="btn btn-outline-danger btn-sm"
-                                            onclick="confirmCancel('@b.Id', '@b.Room?.Name')">Hủy</button>
-                                }
+                                <button type="button" class="btn btn-outline-primary btn-sm" data-bs-toggle="modal" data-bs-target="#bookingModal-@b.Id">
+                                    Xem chi tiết
+                                </button>
+
+                                <!-- Modal Popup Chi Tiết Đơn Đặt Phòng -->
+                                <div class="modal fade" id="bookingModal-@b.Id" tabindex="-1" aria-labelledby="bookingModalLabel-@b.Id" aria-hidden="true">
+                                    <div class="modal-dialog modal-dialog-centered modal-lg">
+                                        <div class="modal-content text-start">
+                                            <div class="modal-header">
+                                                <h6 class="modal-title fw-bold" id="bookingModalLabel-@b.Id">Thông tin đơn đặt phòng #@b.Id</h6>
+                                                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                                            </div>
+                                            <div class="modal-body">
+                                                <div class="row g-3">
+                                                    <div class="col-md-6">
+                                                        <p class="mb-2"><strong>Phòng họp:</strong> @b.Room?.Name (@b.Room?.Location)</p>
+                                                        <p class="mb-2"><strong>Sức chứa:</strong> @b.Room?.Capacity người</p>
+                                                        <p class="mb-2"><strong>Đơn giá thuê:</strong> @b.Room?.PricePerHour.ToString("N0") đ / giờ</p>
+                                                        <p class="mb-2"><strong>Ngày tạo đơn:</strong> @b.CreatedAt.ToLocalTime().ToString("dd/MM/yyyy HH:mm")</p>
+                                                    </div>
+                                                    <div class="col-md-6">
+                                                        <p class="mb-2"><strong>Tiêu đề cuộc họp:</strong> @b.Title</p>
+                                                        <p class="mb-2"><strong>Thời gian sử dụng:</strong> @b.StartTime.ToLocalTime().ToString("dd/MM/yyyy HH:mm") đến @b.EndTime.ToLocalTime().ToString("HH:mm")</p>
+                                                        <p class="mb-2"><strong>Tổng chi phí trừ ví:</strong> <span class="fw-bold text-success">@b.TotalPrice.ToString("N0") đ</span></p>
+                                                        <p class="mb-2">
+                                                            <strong>Trạng thái đơn:</strong>
+                                                            <span class="badge @sb[b.Status] me-1">@st[b.Status]</span>
+                                                            <span class="badge @pb[b.PaymentStatus]">@pt[b.PaymentStatus]</span>
+                                                        </p>
+                                                    </div>
+                                                    <div class="col-12">
+                                                        <label class="form-label fw-bold mb-1">Ghi chú & Yêu cầu từ bạn:</label>
+                                                        <div class="p-3 bg-light border rounded small text-dark mb-3">
+                                                            @(string.IsNullOrWhiteSpace(b.Description) ? "(Không có ghi chú thêm)" : b.Description)
+                                                        </div>
+                                                    </div>
+
+                                                    @if (b.Status == BookingStatus.Rejected)
+                                                    {
+                                                        <div class="col-12">
+                                                            <div class="alert alert-danger mb-0 border-danger card-body p-3">
+                                                                <h6 class="fw-bold alert-heading mb-1 text-danger">Lý do từ chối từ Ban Quản Lý:</h6>
+                                                                <p class="mb-0 text-dark">@(string.IsNullOrWhiteSpace(rejectionReason) ? "Không có lý do cụ thể." : rejectionReason)</p>
+                                                            </div>
+                                                        </div>
+                                                    }
+                                                </div>
+                                            </div>
+                                            <div class="modal-footer">
+                                                <button type="button" class="btn btn-outline-secondary btn-sm" data-bs-dismiss="modal">Đóng</button>
+                                                @if (b.Status == BookingStatus.Pending)
+                                                {
+                                                    <button type="button" class="btn btn-danger btn-sm px-3"
+                                                            onclick="confirmCancel('@b.Id', '@b.Room?.Name')">
+                                                        Hủy đơn này
+                                                    </button>
+                                                }
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
                             </td>
                         </tr>
                     }

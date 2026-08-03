@@ -12,10 +12,33 @@
                 <form asp-action="Profile" method="post">
                     <div asp-validation-summary="ModelOnly" class="alert alert-danger py-2 small"></div>
 
+                    <div class="row g-2 mb-3">
+                        <div class="col-md-6">
+                            <label class="form-label">Mã tài khoản (User ID)</label>
+                            <input class="form-control bg-light fw-bold text-primary" value="@Model.UserId" readonly disabled />
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Số dư ví hiện tại</label>
+                            <input class="form-control bg-light fw-bold text-success" value="@Model.Balance.ToString("N0") đ" readonly disabled />
+                        </div>
+                    </div>
+
                     <div class="mb-3">
                         <label class="form-label">Email</label>
                         <input class="form-control bg-light" value="@Model.Email" readonly disabled />
                     </div>
+
+                    @if (Model.Roles != null && Model.Roles.Any())
+                    {
+                        <div class="mb-3">
+                            <label class="form-label d-block">Vai trò</label>
+                            @foreach (var role in Model.Roles)
+                            {
+                                <span class="badge bg-secondary me-1">@role</span>
+                            }
+                        </div>
+                    }
+
                     <div class="mb-4">
                         <label asp-for="PhoneNumber" class="form-label">Số điện thoại</label>
                         <input asp-for="PhoneNumber" type="tel" class="form-control" placeholder="0xxxxxxxxx" />

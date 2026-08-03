@@ -1,5 +1,24 @@
+@inject Co_working_Space.Data.ApplicationDbContext DbContext
+@inject Microsoft.AspNetCore.Identity.UserManager<Microsoft.AspNetCore.Identity.IdentityUser> UserManager
+
 @{
     var controller = ViewContext.RouteData.Values["Controller"]?.ToString() ?? "";
+    decimal headerWalletBalance = 0;
+    string headerDisplayName = "";
+
+    if (User.Identity?.IsAuthenticated == true)
+    {
+        var user = await UserManager.GetUserAsync(User);
+        if (user != null)
+        {
+            var rawName = !string.IsNullOrEmpty(user.UserName) ? user.UserName : (user.Email ?? "");
+            headerDisplayName = rawName.Contains('@') ? rawName.Split('@')[0] : rawName;
+            if (string.IsNullOrEmpty(headerDisplayName)) headerDisplayName = user.Id;
+
+            var wallet = await DbContext.Wallets.FindAsync(user.Id);
+            headerWalletBalance = wallet?.Balance ?? 0;
+        }
+    }
 }
 <!DOCTYPE html>
 <html lang="vi">
@@ -23,7 +42,7 @@
                 <span class="navbar-toggler-icon"></span>
             </button>
             <div class="collapse navbar-collapse" id="mainNav">
-                <ul class="navbar-nav ms-auto align-items-lg-center gap-lg-1">
+                <ul class="navbar-nav me-auto mb-2 mb-lg-0 align-items-lg-center">
                     <li class="nav-item">
                         <a class="nav-link @(controller == "Room" ? "active" : "")"
                            asp-controller="Room" asp-action="Index">Phòng họp</a>
@@ -34,15 +53,50 @@
                             <a class="nav-link @(controller == "Booking" ? "active" : "")"
                                asp-controller="Booking" asp-action="MyBookings">Đơn của tôi</a>
                         </li>
+                    }
+                </ul>
+                <ul class="navbar-nav ms-auto align-items-lg-center gap-2">
+                    @if (User.Identity?.IsAuthenticated == true)
+                    {
                         <li class="nav-item">
-                            <a class="nav-link @(controller == "Account" ? "active" : "")"
-                               asp-controller="Account" asp-action="Profile">Hồ sơ</a>
+                            <a asp-controller="Account" asp-action="Profile" class="btn btn-sm btn-light border text-dark fw-medium d-inline-flex align-items-center gap-1 py-1 px-3" title="Xem số dư ví & tài khoản">
+                                Ví: <strong class="text-success ms-1">@headerWalletBalance.ToString("N0") đ</strong>
+                            </a>
                         </li>
-                        <li class="nav-item">
-                            <form asp-controller="Account" asp-action="Logout" method="post" class="d-inline">
-                                @Html.AntiForgeryToken()
-                                <button type="submit" class="btn btn-outline-secondary btn-sm ms-lg-2">Đăng xuất</button>
-                            </form>
+                        @if (User.IsInRole("Admin"))
+                        {
+                            <li class="nav-item">
+                                <a class="btn btn-warning btn-sm text-dark fw-semibold px-3" asp-area="Admin" asp-controller="Dashboard" asp-action="Index">
+                                    Trang Quản trị
+                                </a>
+                            </li>
+                        }
+                        else if (User.IsInRole("Staff"))
+                        {
+                            <li class="nav-item">
+                                <a class="btn btn-warning btn-sm text-dark fw-semibold px-3" asp-area="Admin" asp-controller="Booking" asp-action="Pending">
+                                    Trang Duyệt đơn
+                                </a>
+                            </li>
+                        }
+                        <li class="nav-item dropdown">
+                            <a class="nav-link dropdown-toggle py-1 text-dark fw-medium" href="#" id="userDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                                @headerDisplayName
+                            </a>
+                            <ul class="dropdown-menu dropdown-menu-end shadow-sm" aria-labelledby="userDropdown">
+                                <li>
+                                    <a class="dropdown-item @(controller == "Account" ? "active" : "")" asp-controller="Account" asp-action="Profile">
+                                        Hồ sơ cá nhân
+                                    </a>
+                                </li>
+                                <li><hr class="dropdown-divider" /></li>
+                                <li>
+                                    <form asp-controller="Account" asp-action="Logout" method="post" class="px-2 py-1">
+                                        @Html.AntiForgeryToken()
+                                        <button type="submit" class="btn btn-outline-danger btn-sm w-100 text-start">Đăng xuất</button>
+                                    </form>
+                                </li>
+                            </ul>
                         </li>
                     }
                     else
@@ -51,7 +105,7 @@
                             <a class="nav-link" asp-controller="Account" asp-action="Login">Đăng nhập</a>
                         </li>
                         <li class="nav-item">
-                            <a class="btn btn-primary btn-sm ms-lg-2" asp-controller="Account" asp-action="Register">Đăng ký</a>
+                            <a class="btn btn-primary btn-sm px-3" asp-controller="Account" asp-action="Register">Đăng ký</a>
                         </li>
                     }
                 </ul>
