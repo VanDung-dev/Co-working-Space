@@ -14,8 +14,16 @@ public static class IdGenerator
             _counters[prefix] = ++current;
             if (prefix.StartsWith("BKG-"))
             {
-                var today = DateTime.UtcNow.ToString("yyyyMMdd");
-                return $"{prefix}{today}-{current:D3}";
+                var now = DateTime.UtcNow;
+                var today = now.ToString("yyyyMMdd");
+                var time = now.ToString("HHmmss");
+                return $"{prefix}{today}-{time}-{current:D3}";
+            }
+            if (prefix.StartsWith("APR-") || prefix.StartsWith("USR-") || prefix.StartsWith("STF-") || prefix.StartsWith("ADM-"))
+            {
+                var now = DateTime.UtcNow;
+                var timeStamp = now.ToString("yyyyMMddHHmmss");
+                return $"{prefix}{timeStamp}-{current:D3}";
             }
             return $"{prefix}{current:D4}";
         }
