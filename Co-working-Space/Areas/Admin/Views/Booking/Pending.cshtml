@@ -22,11 +22,11 @@ else
             <table class="table table-hover align-middle mb-0">
                 <thead>
                     <tr>
+                        <th>Mã đơn</th>
                         <th>Người đặt</th>
                         <th>Phòng</th>
                         <th>Tiêu đề</th>
-                        <th>Bắt đầu</th>
-                        <th>Kết thúc</th>
+                        <th>Thời gian</th>
                         <th class="text-end">Tổng tiền</th>
                         <th class="text-end">Thao tác</th>
                     </tr>
@@ -35,20 +35,74 @@ else
                     @foreach (var b in Model)
                     {
                         <tr>
+                            <td><code class="fw-bold">@b.Id</code></td>
                             <td>@b.User?.Email</td>
                             <td class="fw-medium">@b.Room?.Name</td>
                             <td>@b.Title</td>
-                            <td class="text-nowrap">@b.StartTime.ToLocalTime().ToString("dd/MM HH:mm")</td>
-                            <td class="text-nowrap">@b.EndTime.ToLocalTime().ToString("HH:mm")</td>
-                            <td class="text-end text-nowrap">@b.TotalPrice.ToString("N0") đ</td>
+                            <td class="text-nowrap">@b.StartTime.ToLocalTime().ToString("dd/MM HH:mm") - @b.EndTime.ToLocalTime().ToString("HH:mm")</td>
+                            <td class="text-end text-nowrap fw-bold text-success">@b.TotalPrice.ToString("N0") đ</td>
                             <td class="text-end">
-                                <div class="btn-group btn-group-sm">
-                                    <form asp-action="Approve" asp-route-id="@b.Id" method="post">
-                                        @Html.AntiForgeryToken()
-                                        <button type="submit" class="btn btn-success">Duyệt</button>
-                                    </form>
-                                    <button type="button" class="btn btn-outline-danger"
-                                            onclick="confirmReject('@b.Id', '@b.Title.Replace("'", "\\'")')">Từ chối</button>
+                                <button class="btn btn-outline-primary btn-sm" type="button" data-bs-toggle="modal" data-bs-target="#modal-@b.Id">
+                                    Xem chi tiết
+                                </button>
+
+                                <!-- Modal Popup Chi tiết -->
+                                <div class="modal fade" id="modal-@b.Id" tabindex="-1" aria-labelledby="modalLabel-@b.Id" aria-hidden="true">
+                                    <div class="modal-dialog modal-dialog-centered modal-lg">
+                                        <div class="modal-content text-start">
+                                            <div class="modal-header">
+                                                <h6 class="modal-title fw-bold" id="modalLabel-@b.Id">Thông tin chi tiết đơn #@b.Id</h6>
+                                                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                                            </div>
+                                            <div class="modal-body">
+                                                <div class="row g-3">
+                                                    <div class="col-md-6">
+                                                        <p class="mb-2"><strong>Khách hàng đặt:</strong> @b.User?.Email</p>
+                                                        <p class="mb-2"><strong>Phòng họp:</strong> @b.Room?.Name (@b.Room?.Location)</p>
+                                                        <p class="mb-2"><strong>Sức chứa phòng:</strong> @b.Room?.Capacity người</p>
+                                                        <p class="mb-2"><strong>Đơn giá:</strong> @b.Room?.PricePerHour.ToString("N0") đ / giờ</p>
+                                                    </div>
+                                                    <div class="col-md-6">
+                                                        <p class="mb-2"><strong>Tiêu đề cuộc họp:</strong> @b.Title</p>
+                                                        <p class="mb-2"><strong>Thời gian sử dụng:</strong> @b.StartTime.ToLocalTime().ToString("dd/MM/yyyy HH:mm") đến @b.EndTime.ToLocalTime().ToString("HH:mm")</p>
+                                                        <p class="mb-2"><strong>Tổng chi phí trừ ví:</strong> <span class="fw-bold text-success">@b.TotalPrice.ToString("N0") đ</span></p>
+                                                    </div>
+                                                    <div class="col-12">
+                                                        <label class="form-label fw-bold mb-1">Ghi chú & Yêu cầu từ khách hàng:</label>
+                                                        <div class="p-3 bg-light border rounded text-dark small">
+                                                            @(string.IsNullOrWhiteSpace(b.Description) ? "(Không có ghi chú thêm)" : b.Description)
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div class="modal-footer flex-column align-items-stretch">
+                                                <!-- Form nhập lý do từ chối -->
+                                                <div class="collapse w-100 mb-2" id="rejectCollapse-@b.Id">
+                                                    <form asp-action="Reject" asp-route-id="@b.Id" method="post" class="card card-body bg-light border-danger">
+                                                        @Html.AntiForgeryToken()
+                                                        <label class="form-label fw-bold text-danger mb-1 small">Nhập lý do từ chối (Bắt buộc):</label>
+                                                        <textarea name="reason" class="form-control form-control-sm mb-2" rows="2" placeholder="VD: Phòng họp cần bảo trì đột xuất, vui lòng chọn phòng khác..." required></textarea>
+                                                        <div class="d-flex justify-content-end gap-2">
+                                                            <button type="button" class="btn btn-outline-secondary btn-sm" data-bs-toggle="collapse" data-bs-target="#rejectCollapse-@b.Id">Hủy</button>
+                                                            <button type="submit" class="btn btn-danger btn-sm px-3">Xác nhận từ chối đơn</button>
+                                                        </div>
+                                                    </form>
+                                                </div>
+
+                                                <!-- Các nút thao tác mặc định -->
+                                                <div class="d-flex justify-content-end gap-2 w-100">
+                                                    <button type="button" class="btn btn-outline-secondary btn-sm" data-bs-dismiss="modal">Đóng</button>
+                                                    <button type="button" class="btn btn-danger btn-sm px-3" data-bs-toggle="collapse" data-bs-target="#rejectCollapse-@b.Id">
+                                                        Từ chối
+                                                    </button>
+                                                    <form asp-action="Approve" asp-route-id="@b.Id" method="post" class="d-inline" onsubmit="return confirmApprove(event)">
+                                                        @Html.AntiForgeryToken()
+                                                        <button type="submit" class="btn btn-success btn-sm px-3">Duyệt đơn</button>
+                                                    </form>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
                                 </div>
                             </td>
                         </tr>
@@ -61,36 +115,21 @@ else
 
 @section Scripts {
     <script>
-        function confirmReject(id, title) {
+        function confirmApprove(e) {
+            e.preventDefault();
+            const form = e.target;
             Swal.fire({
-                title: 'Từ chối đơn?',
-                text: title,
-                icon: 'warning',
-                input: 'textarea',
-                inputPlaceholder: 'Lý do từ chối (không bắt buộc)',
-                inputAttributes: { 'aria-label': 'Lý do từ chối' },
+                title: 'Xác nhận duyệt đơn?',
+                text: 'Hệ thống sẽ trừ số dư ví của khách hàng và cập nhật đơn sang trạng thái Đã duyệt.',
+                icon: 'question',
                 showCancelButton: true,
-                confirmButtonText: 'Từ chối',
+                confirmButtonText: 'Duyệt ngay',
                 cancelButtonText: 'Hủy',
-                confirmButtonColor: '#dc2626'
+                confirmButtonColor: '#16a34a'
             }).then(r => {
-                if (!r.isConfirmed) return;
-                const f = document.createElement('form');
-                f.method = 'post';
-                f.action = `/Admin/Booking/Reject/${id}`;
-                const token = document.createElement('input');
-                token.type = 'hidden';
-                token.name = '__RequestVerificationToken';
-                token.value = '@Antiforgery.GetAndStoreTokens(Context).RequestToken';
-                f.appendChild(token);
-                const reason = document.createElement('input');
-                reason.type = 'hidden';
-                reason.name = 'reason';
-                reason.value = r.value || '';
-                f.appendChild(reason);
-                document.body.appendChild(f);
-                f.submit();
+                if (r.isConfirmed) form.submit();
             });
+            return false;
         }
     </script>
 }

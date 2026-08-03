@@ -14,26 +14,45 @@
 
 <div class="d-flex justify-content-between align-items-center mb-3">
     <h4 class="mb-0">Quản lý thiết bị</h4>
+    @if (User.IsInRole("Admin"))
+    {
+        <button type="button" class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#createEqModal">
+            Thêm thiết bị
+        </button>
+    }
 </div>
 
-<div class="card mb-3">
-    <div class="card-body">
-        <form asp-action="Create" method="post" class="row g-2 align-items-end">
-            @Html.AntiForgeryToken()
-            <div class="col-auto">
-                <label class="form-label">Tên thiết bị</label>
-                <input name="name" class="form-control form-control-sm" placeholder="VD: Máy chiếu" required />
+@if (User.IsInRole("Admin"))
+{
+    <!-- Modal Popup Thêm Thiết Bị Mới -->
+    <div class="modal fade" id="createEqModal" tabindex="-1" aria-labelledby="createEqModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content text-start">
+                <div class="modal-header">
+                    <h6 class="modal-title fw-bold" id="createEqModalLabel">Thêm thiết bị mới</h6>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <form asp-action="Create" method="post">
+                    @Html.AntiForgeryToken()
+                    <div class="modal-body">
+                        <div class="mb-3">
+                            <label class="form-label">Tên thiết bị</label>
+                            <input name="name" class="form-control" placeholder="VD: Máy chiếu 4K Ultra HD" required />
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Mô tả thiết bị</label>
+                            <textarea name="description" class="form-control" rows="3" placeholder="Mô tả chi tiết hoặc thông số kỹ thuật (Không bắt buộc)"></textarea>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-outline-secondary btn-sm" data-bs-dismiss="modal">Hủy</button>
+                        <button type="submit" class="btn btn-primary btn-sm px-4">Tạo thiết bị mới</button>
+                    </div>
+                </form>
             </div>
-            <div class="col-auto">
-                <label class="form-label">Mô tả</label>
-                <input name="description" class="form-control form-control-sm" placeholder="Không bắt buộc" />
-            </div>
-            <div class="col-auto">
-                <button type="submit" class="btn btn-primary btn-sm">Thêm</button>
-            </div>
-        </form>
+        </div>
     </div>
-</div>
+}
 
 @if (!Model.Any())
 {
@@ -46,10 +65,10 @@ else
             <table class="table table-hover align-middle mb-0">
                 <thead>
                     <tr>
-                        <th>Tên</th>
+                        <th>Mã TB</th>
+                        <th>Tên thiết bị</th>
                         <th>Trạng thái</th>
-                        <th>Phòng</th>
-                        <th>Ghi chú</th>
+                        <th>Phòng sử dụng</th>
                         <th class="text-end">Thao tác</th>
                     </tr>
                 </thead>
@@ -58,34 +77,101 @@ else
                     {
                         var rooms = eq.RoomEquipments?.Select(re => re.Room?.Name).Where(n => !string.IsNullOrEmpty(n));
                         <tr>
-                            <td class="fw-medium">@eq.Name</td>
-                            <td><span class="badge @statusBadge[eq.Status]">@statusText[eq.Status]</span></td>
-                            <td>@(rooms != null && rooms.Any() ? string.Join(", ", rooms) : "—")</td>
-                            <td class="text-muted small">@(string.IsNullOrEmpty(eq.Note) ? "—" : eq.Note)</td>
+                            <td><code>@eq.Id</code></td>
+                            <td>
+                                <div class="fw-semibold">@eq.Name</div>
+                                @if (!string.IsNullOrEmpty(eq.Description))
+                                {
+                                    <div class="text-muted small">@eq.Description</div>
+                                }
+                            </td>
+                            <td>
+                                <span class="badge @statusBadge[eq.Status]">@statusText[eq.Status]</span>
+                            </td>
+                            <td>
+                                @if (rooms != null && rooms.Any())
+                                {
+                                    <span class="small">@string.Join(", ", rooms)</span>
+                                }
+                                else
+                                {
+                                    <span class="text-muted small">— (Chưa phân bổ)</span>
+                                }
+                            </td>
                             <td class="text-end">
-                                <div class="d-inline-flex gap-1 align-items-end">
-                                    <form asp-action="UpdateStatus" method="post" class="d-inline-flex gap-1 align-items-end">
-                                        @Html.AntiForgeryToken()
-                                        <input type="hidden" name="id" value="@eq.Id" />
-                                        <select name="status" class="form-select form-select-sm">
-                                            <option value="0" selected="@(eq.Status == EquipmentStatus.Available)">Sẵn sàng</option>
-                                            <option value="1" selected="@(eq.Status == EquipmentStatus.Maintenance)">Bảo trì</option>
-                                            <option value="2" selected="@(eq.Status == EquipmentStatus.Broken)">Hỏng</option>
-                                        </select>
-                                        <input name="note" class="form-control form-control-sm" placeholder="Ghi chú..."
-                                               value="@eq.Note" style="width: 120px;" />
-                                        <button type="submit" class="btn btn-outline-secondary btn-sm">Lưu</button>
-                                    </form>
-                                    <div class="btn-group btn-group-sm">
-                                        <a asp-action="Transfer" asp-route-id="@eq.Id" class="btn btn-outline-info">Điều chuyển</a>
-                                        @if (User.IsInRole("Admin"))
-                                        {
-                                            <form asp-action="Delete" asp-route-id="@eq.Id" method="post"
-                                                  onsubmit="return confirmDelete('@eq.Name')">
-                                                @Html.AntiForgeryToken()
-                                                <button type="submit" class="btn btn-outline-danger">Xóa</button>
-                                            </form>
-                                        }
+                                <button class="btn btn-outline-primary btn-sm" type="button" data-bs-toggle="modal" data-bs-target="#eqModal-@eq.Id">
+                                    Xem chi tiết
+                                </button>
+
+                                <!-- Modal Popup Chi Tiết Thiết Bị -->
+                                <div class="modal fade" id="eqModal-@eq.Id" tabindex="-1" aria-labelledby="eqModalLabel-@eq.Id" aria-hidden="true">
+                                    <div class="modal-dialog modal-dialog-centered modal-lg">
+                                        <div class="modal-content text-start">
+                                            <div class="modal-header">
+                                                <h6 class="modal-title fw-bold" id="eqModalLabel-@eq.Id">Thông tin thiết bị #@eq.Id - @eq.Name</h6>
+                                                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                                            </div>
+                                            <div class="modal-body">
+                                                <div class="row g-3">
+                                                    <div class="col-md-6">
+                                                        <p class="mb-2"><strong>Mã thiết bị:</strong> <code>@eq.Id</code></p>
+                                                        <p class="mb-2"><strong>Tên thiết bị:</strong> @eq.Name</p>
+                                                        <p class="mb-2">
+                                                            <strong>Trạng thái hiện tại:</strong>
+                                                            <span class="badge @statusBadge[eq.Status]">@statusText[eq.Status]</span>
+                                                        </p>
+                                                    </div>
+                                                    <div class="col-md-6">
+                                                        <p class="mb-2"><strong>Phòng họp đang sử dụng:</strong></p>
+                                                        <p class="small text-muted mb-2">
+                                                            @(rooms != null && rooms.Any() ? string.Join(", ", rooms) : "Chưa được phân bổ vào phòng họp nào.")
+                                                        </p>
+                                                    </div>
+                                                    <div class="col-12">
+                                                        <label class="form-label fw-bold mb-1">Mô tả thiết bị:</label>
+                                                        <div class="p-3 bg-light border rounded small text-dark mb-3">
+                                                            @(string.IsNullOrWhiteSpace(eq.Description) ? "(Không có mô tả)" : eq.Description)
+                                                        </div>
+                                                    </div>
+                                                    <div class="col-12">
+                                                        <div class="card border p-3 bg-light">
+                                                            <h6 class="fw-bold mb-2">Cập nhật trạng thái & Ghi chú kỹ thuật:</h6>
+                                                            <form asp-action="UpdateStatus" method="post" class="row g-2 align-items-end">
+                                                                @Html.AntiForgeryToken()
+                                                                <input type="hidden" name="id" value="@eq.Id" />
+                                                                <div class="col-md-4">
+                                                                    <label class="form-label small">Trạng thái mới</label>
+                                                                    <select name="status" class="form-select form-select-sm">
+                                                                        <option value="0" selected="@(eq.Status == EquipmentStatus.Available)">Sẵn sàng</option>
+                                                                        <option value="1" selected="@(eq.Status == EquipmentStatus.Maintenance)">Bảo trì</option>
+                                                                        <option value="2" selected="@(eq.Status == EquipmentStatus.Broken)">Hỏng</option>
+                                                                    </select>
+                                                                </div>
+                                                                <div class="col-md-6">
+                                                                    <label class="form-label small">Ghi chú kỹ thuật</label>
+                                                                    <input name="note" class="form-control form-control-sm" placeholder="Nhập tình trạng hỏng hóc hoặc ghi chú..." value="@eq.Note" />
+                                                                </div>
+                                                                <div class="col-md-2">
+                                                                    <button type="submit" class="btn btn-primary btn-sm w-100">Lưu thay đổi</button>
+                                                                </div>
+                                                            </form>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div class="modal-footer">
+                                                <button type="button" class="btn btn-outline-secondary btn-sm" data-bs-dismiss="modal">Đóng</button>
+                                                <a asp-action="Transfer" asp-route-id="@eq.Id" class="btn btn-info text-white btn-sm px-3">Điều chuyển phòng</a>
+                                                @if (User.IsInRole("Admin"))
+                                                {
+                                                    <form asp-action="Delete" asp-route-id="@eq.Id" method="post" class="d-inline"
+                                                          onsubmit="return confirmDelete('@eq.Name')">
+                                                        @Html.AntiForgeryToken()
+                                                        <button type="submit" class="btn btn-danger btn-sm px-3">Xóa thiết bị</button>
+                                                    </form>
+                                                }
+                                            </div>
+                                        </div>
                                     </div>
                                 </div>
                             </td>

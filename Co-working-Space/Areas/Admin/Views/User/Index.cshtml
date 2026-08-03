@@ -45,7 +45,51 @@ else
                             </td>
                             <td>@(string.IsNullOrEmpty(u.PhoneNumber) ? "—" : u.PhoneNumber)</td>
                             <td class="text-end">
-                                <a asp-action="ResetPassword" asp-route-id="@u.Id" class="btn btn-outline-warning btn-sm">Reset mật khẩu</a>
+                                <button class="btn btn-outline-primary btn-sm" type="button" data-bs-toggle="modal" data-bs-target="#userModal-@u.Id">
+                                    Xem chi tiết
+                                </button>
+
+                                <!-- Modal Popup Chi Tiết Người Dùng -->
+                                <div class="modal fade" id="userModal-@u.Id" tabindex="-1" aria-labelledby="userModalLabel-@u.Id" aria-hidden="true">
+                                    <div class="modal-dialog modal-dialog-centered">
+                                        <div class="modal-content text-start">
+                                            <div class="modal-header">
+                                                <h6 class="modal-title fw-bold" id="userModalLabel-@u.Id">Thông tin người dùng #@u.Id</h6>
+                                                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                                            </div>
+                                            <div class="modal-body">
+                                                <div class="mb-3">
+                                                    <label class="form-label small text-muted mb-1">Mã tài khoản (User ID)</label>
+                                                    <input class="form-control bg-light text-primary fw-bold" value="@u.Id" readonly disabled />
+                                                </div>
+                                                <div class="mb-3">
+                                                    <label class="form-label small text-muted mb-1">Email đăng nhập</label>
+                                                    <input class="form-control bg-light" value="@u.Email" readonly disabled />
+                                                </div>
+                                                <div class="mb-3">
+                                                    <label class="form-label small text-muted mb-1">Số điện thoại</label>
+                                                    <input class="form-control bg-light" value="@(string.IsNullOrEmpty(u.PhoneNumber) ? "Chưa cập nhật" : u.PhoneNumber)" readonly disabled />
+                                                </div>
+                                                <div class="mb-2">
+                                                    <label class="form-label small text-muted mb-1 d-block">Vai trò hệ thống</label>
+                                                    @foreach (var role in roles)
+                                                    {
+                                                        var cls = role switch {
+                                                            "Admin" => "badge-available",
+                                                            "Staff" => "badge-pending",
+                                                            _ => "badge-simple"
+                                                        };
+                                                        <span class="badge @cls me-1">@role</span>
+                                                    }
+                                                </div>
+                                            </div>
+                                            <div class="modal-footer">
+                                                <button type="button" class="btn btn-outline-secondary btn-sm" data-bs-dismiss="modal">Đóng</button>
+                                                <a asp-action="ResetPassword" asp-route-id="@u.Id" class="btn btn-warning btn-sm px-3 text-dark fw-semibold">Reset mật khẩu</a>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
                             </td>
                         </tr>
                     }

@@ -2,12 +2,95 @@
 
 @{
     ViewData["Title"] = "Quản lý phòng";
+    var allEquipment = ViewBag.AllEquipment as List<Co_working_Space.Models.Equipment> ?? new List<Co_working_Space.Models.Equipment>();
+    var roomEquipmentMap = ViewBag.RoomEquipmentMap as Dictionary<string, List<string>> ?? new Dictionary<string, List<string>>();
+
+    string GetRoomTypeName(string roomId)
+    {
+        if (roomId.StartsWith("RM-S-")) return "Phòng Nhỏ";
+        if (roomId.StartsWith("RM-M-")) return "Phòng Vừa";
+        if (roomId.StartsWith("RM-L-")) return "Phòng Lớn";
+        if (roomId.StartsWith("RM-V-")) return "Phòng VIP";
+        return "Tiêu chuẩn";
+    }
+
+    string GetRoomTypeBadge(string roomId)
+    {
+        if (roomId.StartsWith("RM-V-")) return "bg-danger text-white";
+        if (roomId.StartsWith("RM-L-")) return "bg-primary text-white";
+        if (roomId.StartsWith("RM-M-")) return "bg-info text-dark";
+        return "bg-secondary text-white";
+    }
 }
 
 <div class="d-flex justify-content-between align-items-center mb-3">
     <h4 class="mb-0">Quản lý phòng</h4>
-    <a asp-action="Create" class="btn btn-primary btn-sm">Thêm phòng</a>
+    @if (User.IsInRole("Admin"))
+    {
+        <button type="button" class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#createRoomModal">
+            Thêm phòng
+        </button>
+    }
 </div>
+
+@if (User.IsInRole("Admin"))
+{
+    <!-- Modal Popup Thêm Phòng Mới -->
+    <div class="modal fade" id="createRoomModal" tabindex="-1" aria-labelledby="createRoomModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered modal-lg">
+            <div class="modal-content text-start">
+                <div class="modal-header">
+                    <h6 class="modal-title fw-bold" id="createRoomModalLabel">Thêm phòng họp mới</h6>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <form asp-action="Create" method="post" enctype="multipart/form-data">
+                    @Html.AntiForgeryToken()
+                    <div class="modal-body">
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <label class="form-label">Loại phòng họp</label>
+                                <select name="roomType" class="form-select" id="createRoomTypeSelect">
+                                    <option value="RM-S-">Phòng Nhỏ (RM-S- | Sức chứa ≤ 4 người)</option>
+                                    <option value="RM-M-">Phòng Vừa (RM-M- | Sức chứa 5 - 8 người)</option>
+                                    <option value="RM-L-">Phòng Lớn (RM-L- | Sức chứa 9 - 15 người)</option>
+                                    <option value="RM-V-">Phòng VIP (RM-V- | Sức chứa > 15 người)</option>
+                                </select>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Tên phòng họp</label>
+                                <input name="Name" class="form-control" placeholder="VD: Phòng Focus A" required />
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Vị trí (Tầng / Tòa nhà)</label>
+                                <input name="Location" class="form-control" placeholder="VD: Tầng 2 - Tòa A" required />
+                            </div>
+                            <div class="col-md-3">
+                                <label class="form-label">Sức chứa (người)</label>
+                                <input name="Capacity" type="number" class="form-control" min="1" max="100" value="4" required />
+                            </div>
+                            <div class="col-md-3">
+                                <label class="form-label">Giá thuê / giờ (VNĐ)</label>
+                                <input name="PricePerHour" type="number" class="form-control" min="10000" step="10000" value="100000" required />
+                            </div>
+                            <div class="col-12">
+                                <label class="form-label">Mô tả phòng</label>
+                                <textarea name="Description" class="form-control" rows="2" placeholder="VD: Phòng họp yên tĩnh trang bị sẵn tivi và bảng trắng..."></textarea>
+                            </div>
+                            <div class="col-12">
+                                <label class="form-label">Hình ảnh phòng (Tùy chọn)</label>
+                                <input type="file" name="imageFile" class="form-control" accept="image/*" />
+                            </div>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-outline-secondary btn-sm" data-bs-dismiss="modal">Hủy</button>
+                        <button type="submit" class="btn btn-primary btn-sm px-4">Tạo phòng họp</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+}
 
 @if (!Model.Any())
 {
@@ -20,7 +103,9 @@ else
             <table class="table table-hover align-middle mb-0">
                 <thead>
                     <tr>
-                        <th>Tên</th>
+                        <th>Mã phòng</th>
+                        <th>Tên phòng</th>
+                        <th>Loại phòng</th>
                         <th>Vị trí</th>
                         <th class="text-center">Sức chứa</th>
                         <th class="text-end">Giá / giờ</th>
@@ -31,26 +116,148 @@ else
                 <tbody>
                     @foreach (var room in Model)
                     {
+                        var assignedEqIds = roomEquipmentMap.TryGetValue(room.Id, out var eqIds) ? eqIds : new List<string>();
+                        var typeName = GetRoomTypeName(room.Id);
+                        var typeBadge = GetRoomTypeBadge(room.Id);
                         <tr>
+                            <td><code>@room.Id</code></td>
                             <td class="fw-medium">@room.Name</td>
+                            <td>
+                                <span class="badge @typeBadge">@typeName</span>
+                            </td>
                             <td>@room.Location</td>
-                            <td class="text-center">@room.Capacity</td>
-                            <td class="text-end text-nowrap">@room.PricePerHour.ToString("N0") đ</td>
+                            <td class="text-center">@room.Capacity người</td>
+                            <td class="text-end text-nowrap fw-semibold text-success">@room.PricePerHour.ToString("N0") đ</td>
                             <td>
                                 <span class="badge @(room.IsActive ? "badge-active" : "badge-inactive")">
                                     @(room.IsActive ? "Hoạt động" : "Bảo trì")
                                 </span>
                             </td>
                             <td class="text-end">
-                                <div class="btn-group btn-group-sm">
-                                    <a asp-action="Edit" asp-route-id="@room.Id" class="btn btn-outline-secondary">Sửa</a>
-                                    <a asp-action="ManageEquipment" asp-route-id="@room.Id" class="btn btn-outline-primary">Thiết bị</a>
-                                    <form asp-action="ToggleStatus" asp-route-id="@room.Id" method="post" class="d-inline">
-                                        @Html.AntiForgeryToken()
-                                        <button type="submit" class="btn @(room.IsActive ? "btn-outline-warning" : "btn-outline-success")">
-                                            @(room.IsActive ? "Bảo trì" : "Kích hoạt")
-                                        </button>
-                                    </form>
+                                <button class="btn btn-outline-primary btn-sm" type="button" data-bs-toggle="modal" data-bs-target="#roomModal-@room.Id">
+                                    Xem chi tiết
+                                </button>
+
+                                <!-- Modal Popup Chi Tiết & Quản Lý Phòng -->
+                                <div class="modal fade" id="roomModal-@room.Id" tabindex="-1" aria-labelledby="roomModalLabel-@room.Id" aria-hidden="true">
+                                    <div class="modal-dialog modal-dialog-centered modal-lg">
+                                        <div class="modal-content text-start">
+                                            <div class="modal-header">
+                                                <h6 class="modal-title fw-bold" id="roomModalLabel-@room.Id">Chi tiết phòng #@room.Id - @room.Name</h6>
+                                                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                                            </div>
+                                            <div class="modal-body">
+                                                <ul class="nav nav-tabs mb-3" id="roomTab-@room.Id" role="tablist">
+                                                    <li class="nav-item" role="presentation">
+                                                        <button class="nav-link active" id="info-tab-@room.Id" data-bs-toggle="tab" data-bs-target="#info-@room.Id" type="button" role="tab">Thông tin & Sửa phòng</button>
+                                                    </li>
+                                                    <li class="nav-item" role="presentation">
+                                                        <button class="nav-link" id="equip-tab-@room.Id" data-bs-toggle="tab" data-bs-target="#equip-@room.Id" type="button" role="tab">Gán thiết bị phòng</button>
+                                                    </li>
+                                                </ul>
+                                                <div class="tab-content" id="roomTabContent-@room.Id">
+                                                    <!-- Tab 1: Sửa thông tin phòng -->
+                                                    <div class="tab-pane fade show active" id="info-@room.Id" role="tabpanel">
+                                                        <form asp-action="Edit" method="post" enctype="multipart/form-data">
+                                                            @Html.AntiForgeryToken()
+                                                            <input type="hidden" name="Id" value="@room.Id" />
+                                                            <div class="row g-3">
+                                                                @if (!string.IsNullOrEmpty(room.ImageUrl))
+                                                                {
+                                                                    <div class="col-md-4">
+                                                                        <img src="@room.ImageUrl" class="img-fluid rounded border" alt="@room.Name" style="max-height: 180px; object-fit: cover; width: 100%;" />
+                                                                    </div>
+                                                                }
+                                                                <div class="@(!string.IsNullOrEmpty(room.ImageUrl) ? "col-md-8" : "col-12")">
+                                                                    <div class="row g-2">
+                                                                        <div class="col-md-6">
+                                                                            <label class="form-label small">Tên phòng</label>
+                                                                            <input name="Name" class="form-control form-control-sm" value="@room.Name" required />
+                                                                        </div>
+                                                                        <div class="col-md-6">
+                                                                            <label class="form-label small">Vị trí</label>
+                                                                            <input name="Location" class="form-control form-control-sm" value="@room.Location" required />
+                                                                        </div>
+                                                                        <div class="col-md-6">
+                                                                            <label class="form-label small">Phân loại phòng</label>
+                                                                            <input class="form-control form-control-sm bg-light" value="@typeName (@room.Id[..4])" readonly disabled />
+                                                                        </div>
+                                                                        <div class="col-md-6">
+                                                                            <label class="form-label small">Sức chứa (người)</label>
+                                                                            <input name="Capacity" type="number" class="form-control form-control-sm" value="@room.Capacity" required />
+                                                                        </div>
+                                                                        <div class="col-12">
+                                                                            <label class="form-label small">Giá thuê / giờ (đ)</label>
+                                                                            <input name="PricePerHour" type="number" class="form-control form-control-sm" value="@room.PricePerHour" required />
+                                                                        </div>
+                                                                    </div>
+                                                                </div>
+                                                                <div class="col-12">
+                                                                    <label class="form-label small">Mô tả phòng họp</label>
+                                                                    <textarea name="Description" class="form-control form-control-sm" rows="2">@room.Description</textarea>
+                                                                </div>
+                                                                <div class="col-12">
+                                                                    <label class="form-label small">Đổi hình ảnh mới (tùy chọn)</label>
+                                                                    <input type="file" name="imageFile" class="form-control form-control-sm" accept="image/*" />
+                                                                </div>
+                                                                @if (User.IsInRole("Admin"))
+                                                                {
+                                                                    <div class="col-12 text-end">
+                                                                        <button type="submit" class="btn btn-primary btn-sm px-3">Lưu thông tin phòng</button>
+                                                                    </div>
+                                                                }
+                                                            </div>
+                                                        </form>
+                                                    </div>
+
+                                                    <!-- Tab 2: Gán thiết bị phòng -->
+                                                    <div class="tab-pane fade" id="equip-@room.Id" role="tabpanel">
+                                                        <form asp-action="ManageEquipment" method="post">
+                                                            @Html.AntiForgeryToken()
+                                                            <input type="hidden" name="roomId" value="@room.Id" />
+                                                            <p class="small text-muted mb-2">Đánh dấu chọn các thiết bị được trang bị cho phòng họp <strong>@room.Name</strong>:</p>
+                                                            @if (!allEquipment.Any())
+                                                            {
+                                                                <p class="text-muted small">Chưa có thiết bị nào trong hệ thống.</p>
+                                                            }
+                                                            else
+                                                            {
+                                                                <div class="row g-2 mb-3">
+                                                                    @foreach (var eq in allEquipment)
+                                                                    {
+                                                                        var isChecked = assignedEqIds.Contains(eq.Id);
+                                                                        <div class="col-md-6">
+                                                                            <div class="form-check card p-2 bg-light border">
+                                                                                <input class="form-check-input ms-0 me-2" type="checkbox" name="equipmentIds" value="@eq.Id" id="chk-@room.Id-@eq.Id" @(isChecked ? "checked" : "") />
+                                                                                <label class="form-check-label small fw-semibold" for="chk-@room.Id-@eq.Id">
+                                                                                    @eq.Name
+                                                                                </label>
+                                                                            </div>
+                                                                        </div>
+                                                                    }
+                                                                </div>
+                                                                @if (User.IsInRole("Admin"))
+                                                                {
+                                                                    <div class="text-end">
+                                                                        <button type="submit" class="btn btn-success btn-sm px-3">Cập nhật thiết bị phòng</button>
+                                                                    </div>
+                                                                }
+                                                            }
+                                                        </form>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div class="modal-footer justify-content-between">
+                                                <form asp-action="ToggleStatus" asp-route-id="@room.Id" method="post" class="d-inline">
+                                                    @Html.AntiForgeryToken()
+                                                    <button type="submit" class="btn @(room.IsActive ? "btn-outline-warning" : "btn-outline-success") btn-sm px-3">
+                                                        Trạng thái: @(room.IsActive ? "Đang hoạt động (Bấm để Bảo trì)" : "Đang bảo trì (Bấm để Kích hoạt)")
+                                                    </button>
+                                                </form>
+                                                <button type="button" class="btn btn-outline-secondary btn-sm" data-bs-dismiss="modal">Đóng</button>
+                                            </div>
+                                        </div>
+                                    </div>
                                 </div>
                             </td>
                         </tr>

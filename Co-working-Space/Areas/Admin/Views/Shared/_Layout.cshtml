@@ -23,8 +23,11 @@
                 Menu
             </button>
             <nav id="adminNav" class="collapse d-md-flex">
-                <a class="nav-link @(controller == "Dashboard" ? "active" : "")"
-                   asp-area="Admin" asp-controller="Dashboard" asp-action="Index">Tổng quan</a>
+                @if (User.IsInRole("Admin"))
+                {
+                    <a class="nav-link @(controller == "Dashboard" ? "active" : "")"
+                       asp-area="Admin" asp-controller="Dashboard" asp-action="Index">Tổng quan</a>
+                }
                 <a class="nav-link @(controller == "Room" ? "active" : "")"
                    asp-area="Admin" asp-controller="Room" asp-action="Index">Phòng họp</a>
                 <a class="nav-link @(controller == "Equipment" ? "active" : "")"
@@ -37,9 +40,22 @@
                    asp-area="Admin" asp-controller="Wallet" asp-action="Index">Ví tiền</a>
             </nav>
             <div class="sidebar-footer">
+                <div class="mb-3 px-1">
+                    <div class="small text-light fw-medium text-truncate mb-1" title="@User.Identity?.Name">
+                        @User.Identity?.Name
+                    </div>
+                    <div>
+                        <span class="badge @(User.IsInRole("Admin") ? "bg-warning text-dark" : "bg-info text-dark")">
+                            @(User.IsInRole("Admin") ? "Admin" : "Staff")
+                        </span>
+                    </div>
+                </div>
+                <a class="btn btn-outline-info btn-sm w-100 mb-2 text-center" asp-area="" asp-controller="Home" asp-action="Index">
+                    Xem trang khách
+                </a>
                 <form asp-area="" asp-controller="Account" asp-action="Logout" method="post">
                     @Html.AntiForgeryToken()
-                    <button type="submit" class="btn btn-outline-light btn-sm w-100">Đăng xuất</button>
+                    <button type="submit" class="btn btn-outline-danger btn-sm w-100 text-center">Đăng xuất</button>
                 </form>
             </div>
         </aside>

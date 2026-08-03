@@ -29,7 +29,47 @@
                             @((wallet?.Balance ?? 0).ToString("N0")) đ
                         </td>
                         <td class="text-end">
-                            <a asp-action="TopUp" asp-route-userId="@u.Id" class="btn btn-outline-success btn-sm">Nạp tiền</a>
+                            <button class="btn btn-outline-primary btn-sm" type="button" data-bs-toggle="modal" data-bs-target="#walletModal-@u.Id">
+                                Xem chi tiết
+                            </button>
+
+                            <!-- Modal Popup Chi Tiết Ví & Nạp Tiền -->
+                            <div class="modal fade" id="walletModal-@u.Id" tabindex="-1" aria-labelledby="walletModalLabel-@u.Id" aria-hidden="true">
+                                <div class="modal-dialog modal-dialog-centered">
+                                    <div class="modal-content text-start">
+                                        <div class="modal-header">
+                                            <h6 class="modal-title fw-bold" id="walletModalLabel-@u.Id">Thông tin ví tiền #@u.Id</h6>
+                                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                                        </div>
+                                        <div class="modal-body">
+                                            <div class="mb-3">
+                                                <label class="form-label small text-muted mb-1">Email tài khoản</label>
+                                                <input class="form-control bg-light" value="@u.Email" readonly disabled />
+                                            </div>
+                                            <div class="mb-4">
+                                                <label class="form-label small text-muted mb-1">Số dư ví hiện tại</label>
+                                                <input class="form-control bg-light text-success fw-bold fs-5" value="@((wallet?.Balance ?? 0).ToString("N0")) đ" readonly disabled />
+                                            </div>
+
+                                            <div class="card border p-3 bg-light">
+                                                <h6 class="fw-bold mb-2">Nạp tiền tại quầy</h6>
+                                                <form asp-action="TopUp" method="post">
+                                                    @Html.AntiForgeryToken()
+                                                    <input type="hidden" name="userId" value="@u.Id" />
+                                                    <div class="mb-3">
+                                                        <label class="form-label small mb-1">Số tiền nạp (VNĐ)</label>
+                                                        <input type="number" name="amount" class="form-control" placeholder="VD: 500000" min="10000" step="10000" required />
+                                                    </div>
+                                                    <button type="submit" class="btn btn-success btn-sm w-100 fw-semibold">Xác nhận nạp tiền ngay</button>
+                                                </form>
+                                            </div>
+                                        </div>
+                                        <div class="modal-footer">
+                                            <button type="button" class="btn btn-outline-secondary btn-sm" data-bs-dismiss="modal">Đóng</button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
                         </td>
                     </tr>
                 }
