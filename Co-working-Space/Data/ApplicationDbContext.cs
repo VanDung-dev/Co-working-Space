@@ -36,7 +36,7 @@ public class ApplicationDbContext : IdentityDbContext<IdentityUser>
 
         builder.Entity<BookingApproval>(entity =>
         {
-            entity.HasOne(a => a.Booking).WithMany().HasForeignKey(a => a.BookingId);
+            entity.HasOne(a => a.Booking).WithMany(b => b.Approvals).HasForeignKey(a => a.BookingId);
             entity.HasOne(a => a.Approver).WithMany().HasForeignKey(a => a.ApproverId).OnDelete(DeleteBehavior.NoAction);
         });
 
