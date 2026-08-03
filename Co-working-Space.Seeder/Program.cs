@@ -9,27 +9,19 @@ Console.WriteLine("=================================================");
 Console.WriteLine(" 🚀 CO-WORKING SPACE DATABASE SEEDER TOOL");
 Console.WriteLine("=================================================");
 
-// 1. Setup Configuration
-var basePath = Directory.GetCurrentDirectory();
-var configBuilder = new ConfigurationBuilder().SetBasePath(basePath);
+// 1. Setup Configuration - Search robustly for appsettings.json
+string? settingsPath = FindAppSettingsPath();
 
-if (File.Exists(Path.Combine(basePath, "appsettings.json")))
+if (string.IsNullOrEmpty(settingsPath))
 {
-    configBuilder.AddJsonFile("appsettings.json", optional: false);
+    Console.WriteLine("❌ Không tìm thấy file appsettings.json trong dự án!");
+    return;
 }
-else
-{
-    var parentSettings = Path.Combine(basePath, "..", "Co-working-Space", "appsettings.json");
-    if (File.Exists(parentSettings))
-    {
-        configBuilder.AddJsonFile(Path.GetFullPath(parentSettings), optional: false);
-    }
-    else
-    {
-        Console.WriteLine("❌ Không tìm thấy file appsettings.json!");
-        return;
-    }
-}
+
+Console.WriteLine($"📄 Loading configuration from: {settingsPath}");
+
+var configBuilder = new ConfigurationBuilder()
+    .AddJsonFile(settingsPath, optional: false);
 
 var configuration = configBuilder.Build();
 var connectionString = configuration.GetConnectionString("DefaultConnection");
@@ -79,4 +71,39 @@ catch (Exception ex)
     {
         Console.WriteLine($"    Inner Details: {ex.InnerException.Message}");
     }
+}
+
+static string? FindAppSettingsPath()
+{
+    var candidates = new List<string>
+    {
+        Path.Combine(Directory.GetCurrentDirectory(), "Co-working-Space", "appsettings.json"),
+        Path.Combine(Directory.GetCurrentDirectory(), "appsettings.json"),
+        Path.Combine(AppContext.BaseDirectory, "appsettings.json"),
+        Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", "Co-working-Space", "appsettings.json")
+    };
+
+    foreach (var path in candidates)
+    {
+        var fullPath = Path.GetFullPath(path);
+        if (File.Exists(fullPath))
+        {
+            return fullPath;
+        }
+    }
+
+    // Fallback: traverse up directory tree to search for Co-working-Space/appsettings.json
+    var currentDir = new DirectoryInfo(Directory.GetCurrentDirectory());
+    while (currentDir != null)
+    {
+        var subPath = Path.Combine(currentDir.FullName, "Co-working-Space", "appsettings.json");
+        if (File.Exists(subPath)) return Path.GetFullPath(subPath);
+
+        var directPath = Path.Combine(currentDir.FullName, "appsettings.json");
+        if (File.Exists(directPath)) return Path.GetFullPath(directPath);
+
+        currentDir = currentDir.Parent;
+    }
+
+    return null;
 }
