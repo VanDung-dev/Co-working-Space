@@ -35,6 +35,11 @@ public class BookingController : Controller
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> Reject(string id, string reason)
     {
+        if (string.IsNullOrWhiteSpace(reason))
+        {
+            TempData["ErrorMessage"] = "Vui lòng nhập lý do từ chối.";
+            return RedirectToAction("Pending");
+        }
         var approverId = User.FindFirstValue(ClaimTypes.NameIdentifier)!;
         var result = await _approvalService.RejectAsync(id, approverId, reason);
         if (!result) return NotFound();

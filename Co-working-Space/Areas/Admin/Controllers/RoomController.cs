@@ -16,7 +16,15 @@ public class RoomController : Controller
 
     [HttpGet]
     public async Task<IActionResult> Index()
-        => View(await _context.Rooms.OrderBy(r => r.Name).ToListAsync());
+    {
+        var rooms = await _context.Rooms.OrderBy(r => r.Name).ToListAsync();
+        ViewBag.AllEquipment = await _context.Equipment.OrderBy(e => e.Name).ToListAsync();
+        var roomEquipments = await _context.RoomEquipments.ToListAsync();
+        ViewBag.RoomEquipmentMap = roomEquipments
+            .GroupBy(re => re.RoomId)
+            .ToDictionary(g => g.Key, g => g.Select(re => re.EquipmentId).ToList());
+        return View(rooms);
+    }
 
     [HttpPost]
     [ValidateAntiForgeryToken]
@@ -39,16 +47,25 @@ public class RoomController : Controller
     [Authorize(Roles = "Admin")]
     [HttpPost]
     [ValidateAntiForgeryToken]
-    public async Task<IActionResult> Create(Room room, IFormFile? imageFile)
+    public async Task<IActionResult> Create(Room room, string? roomType = null, IFormFile? imageFile = null)
     {
         if (!ModelState.IsValid) return View(room);
-        room.Id = room.Capacity switch
+
+        var prefix = roomType switch
         {
-            <= 4 => IdGenerator.Next(IdGenerator.RoomSmall),
-            <= 8 => IdGenerator.Next(IdGenerator.RoomMedium),
-            <= 15 => IdGenerator.Next(IdGenerator.RoomLarge),
-            _ => IdGenerator.Next(IdGenerator.RoomVip)
+            "RM-S-" => IdGenerator.RoomSmall,
+            "RM-M-" => IdGenerator.RoomMedium,
+            "RM-L-" => IdGenerator.RoomLarge,
+            "RM-V-" => IdGenerator.RoomVip,
+            _ => room.Capacity switch
+            {
+                <= 4 => IdGenerator.RoomSmall,
+                <= 8 => IdGenerator.RoomMedium,
+                <= 15 => IdGenerator.RoomLarge,
+                _ => IdGenerator.RoomVip
+            }
         };
+        room.Id = IdGenerator.Next(prefix);
 
         if (imageFile != null)
             room.ImageUrl = await SaveImageAsync(imageFile);
