@@ -1,3 +1,4 @@
+@inject Microsoft.AspNetCore.Antiforgery.IAntiforgery Antiforgery
 @model List<Co_working_Space.Models.Booking>
 
 @{
@@ -93,7 +94,7 @@ else
                 f.action = `/Booking/Cancel/${id}`;
                 const token = document.createElement('input');
                 token.name = '__RequestVerificationToken';
-                token.value = '@Html.AntiForgeryToken()'.match(/value="([^"]+)"/)?.[1] || '';
+                token.value = '@Antiforgery.GetAndStoreTokens(Context).RequestToken';
                 f.appendChild(token);
                 document.body.appendChild(f);
                 f.submit();
