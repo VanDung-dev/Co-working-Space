@@ -1,0 +1,61 @@
+@{
+    var controller = ViewContext.RouteData.Values["Controller"]?.ToString() ?? "";
+}
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"] — Admin</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
+    <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+</head>
+<body>
+    <div class="admin-shell">
+        <aside class="admin-sidebar">
+            <a class="brand text-decoration-none" asp-area="Admin" asp-controller="Dashboard" asp-action="Index">Co-working Space</a>
+            <button class="btn btn-dark d-md-none w-100 rounded-0 border-bottom" type="button"
+                    data-bs-toggle="collapse" data-bs-target="#adminNav" aria-expanded="false" aria-label="Mở menu">
+                Menu
+            </button>
+            <nav id="adminNav" class="collapse d-md-flex">
+                <a class="nav-link @(controller == "Dashboard" ? "active" : "")"
+                   asp-area="Admin" asp-controller="Dashboard" asp-action="Index">Tổng quan</a>
+                <a class="nav-link @(controller == "Room" ? "active" : "")"
+                   asp-area="Admin" asp-controller="Room" asp-action="Index">Phòng họp</a>
+                <a class="nav-link @(controller == "Equipment" ? "active" : "")"
+                   asp-area="Admin" asp-controller="Equipment" asp-action="Index">Thiết bị</a>
+                <a class="nav-link @(controller == "Booking" ? "active" : "")"
+                   asp-area="Admin" asp-controller="Booking" asp-action="Pending">Duyệt đơn</a>
+                <a class="nav-link @(controller == "User" ? "active" : "")"
+                   asp-area="Admin" asp-controller="User" asp-action="Index">Người dùng</a>
+                <a class="nav-link @(controller == "Wallet" ? "active" : "")"
+                   asp-area="Admin" asp-controller="Wallet" asp-action="Index">Ví tiền</a>
+            </nav>
+            <div class="sidebar-footer">
+                <form asp-area="" asp-controller="Account" asp-action="Logout" method="post">
+                    @Html.AntiForgeryToken()
+                    <button type="submit" class="btn btn-outline-light btn-sm w-100">Đăng xuất</button>
+                </form>
+            </div>
+        </aside>
+        <main class="admin-main">
+            @RenderBody()
+        </main>
+    </div>
+
+    <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+    @await RenderSectionAsync("Scripts", required: false)
+
+    <script>
+        const toastSuccess = '@TempData["SuccessMessage"]';
+        const toastError = '@TempData["ErrorMessage"]';
+        if (toastSuccess) Swal.fire({ icon: 'success', title: toastSuccess, timer: 3000, showConfirmButton: false });
+        if (toastError) Swal.fire({ icon: 'error', title: toastError, timer: 5000, showConfirmButton: false });
+    </script>
+</body>
+</html>

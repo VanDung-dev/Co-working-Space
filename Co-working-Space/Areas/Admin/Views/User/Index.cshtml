@@ -1,0 +1,56 @@
+@model List<Microsoft.AspNetCore.Identity.IdentityUser>
+
+@{
+    ViewData["Title"] = "Quản lý người dùng";
+    var userRoles = (Dictionary<string, IList<string>>)ViewBag.UserRoles;
+}
+
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h4 class="mb-0">Người dùng</h4>
+</div>
+
+@if (!Model.Any())
+{
+    <p class="text-muted">Chưa có người dùng nào.</p>
+}
+else
+{
+    <div class="card p-0 overflow-hidden">
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+                <thead>
+                    <tr>
+                        <th>Email</th>
+                        <th>Vai trò</th>
+                        <th>Số điện thoại</th>
+                        <th class="text-end">Thao tác</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var u in Model)
+                    {
+                        var roles = userRoles.TryGetValue(u.Id, out var r) ? r : new List<string>();
+                        <tr>
+                            <td class="fw-medium">@u.Email</td>
+                            <td>
+                                @foreach (var role in roles)
+                                {
+                                    var cls = role switch {
+                                        "Admin" => "badge-available",
+                                        "Staff" => "badge-pending",
+                                        _ => "badge-simple"
+                                    };
+                                    <span class="badge @cls me-1">@role</span>
+                                }
+                            </td>
+                            <td>@(string.IsNullOrEmpty(u.PhoneNumber) ? "—" : u.PhoneNumber)</td>
+                            <td class="text-end">
+                                <a asp-action="ResetPassword" asp-route-id="@u.Id" class="btn btn-outline-warning btn-sm">Reset mật khẩu</a>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+}

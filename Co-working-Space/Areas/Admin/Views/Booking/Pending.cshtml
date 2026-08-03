@@ -1,0 +1,95 @@
+@model List<Co_working_Space.Models.Booking>
+
+@{
+    ViewData["Title"] = "Duyệt đơn";
+}
+
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h4 class="mb-0">Đơn chờ duyệt</h4>
+</div>
+
+@if (!Model.Any())
+{
+    <div class="text-center text-muted py-5">
+        <p class="mb-1 fw-semibold">Không có đơn nào chờ duyệt.</p>
+    </div>
+}
+else
+{
+    <div class="card p-0 overflow-hidden">
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+                <thead>
+                    <tr>
+                        <th>Người đặt</th>
+                        <th>Phòng</th>
+                        <th>Tiêu đề</th>
+                        <th>Bắt đầu</th>
+                        <th>Kết thúc</th>
+                        <th class="text-end">Tổng tiền</th>
+                        <th class="text-end">Thao tác</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var b in Model)
+                    {
+                        <tr>
+                            <td>@b.User?.Email</td>
+                            <td class="fw-medium">@b.Room?.Name</td>
+                            <td>@b.Title</td>
+                            <td class="text-nowrap">@b.StartTime.ToLocalTime().ToString("dd/MM HH:mm")</td>
+                            <td class="text-nowrap">@b.EndTime.ToLocalTime().ToString("HH:mm")</td>
+                            <td class="text-end text-nowrap">@b.TotalPrice.ToString("N0") đ</td>
+                            <td class="text-end">
+                                <div class="btn-group btn-group-sm">
+                                    <form asp-action="Approve" asp-route-id="@b.Id" method="post">
+                                        @Html.AntiForgeryToken()
+                                        <button type="submit" class="btn btn-success">Duyệt</button>
+                                    </form>
+                                    <button type="button" class="btn btn-outline-danger"
+                                            onclick="confirmReject('@b.Id', '@b.Title.Replace("'", "\\'")')">Từ chối</button>
+                                </div>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+}
+
+@section Scripts {
+    <script>
+        function confirmReject(id, title) {
+            Swal.fire({
+                title: 'Từ chối đơn?',
+                text: title,
+                icon: 'warning',
+                input: 'textarea',
+                inputPlaceholder: 'Lý do từ chối (không bắt buộc)',
+                inputAttributes: { 'aria-label': 'Lý do từ chối' },
+                showCancelButton: true,
+                confirmButtonText: 'Từ chối',
+                cancelButtonText: 'Hủy',
+                confirmButtonColor: '#dc2626'
+            }).then(r => {
+                if (!r.isConfirmed) return;
+                const f = document.createElement('form');
+                f.method = 'post';
+                f.action = `/Admin/Booking/Reject/${id}`;
+                const token = document.createElement('input');
+                token.type = 'hidden';
+                token.name = '__RequestVerificationToken';
+                token.value = '@Html.AntiForgeryToken()'.match(/value="([^"]+)"/)?.[1] || '';
+                f.appendChild(token);
+                const reason = document.createElement('input');
+                reason.type = 'hidden';
+                reason.name = 'reason';
+                reason.value = r.value || '';
+                f.appendChild(reason);
+                document.body.appendChild(f);
+                f.submit();
+            });
+        }
+    </script>
+}

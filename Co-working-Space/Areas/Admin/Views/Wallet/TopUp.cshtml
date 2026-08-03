@@ -1,0 +1,28 @@
+@{
+    ViewData["Title"] = "Nạp tiền";
+}
+
+<div class="row justify-content-center">
+    <div class="col-md-5">
+        <div class="card">
+            <div class="card-body p-4">
+                <h5 class="mb-1">Nạp tiền vào ví</h5>
+                <p class="text-muted small mb-3">@ViewBag.UserEmail — số dư: <strong>@ViewBag.CurrentBalance.ToString("N0") đ</strong></p>
+
+                <form asp-action="TopUp" method="post">
+                    @Html.AntiForgeryToken()
+                    <input type="hidden" name="userId" value="@ViewContext.RouteData.Values["userId"]" />
+                    <div asp-validation-summary="ModelOnly" class="alert alert-danger py-2 small"></div>
+
+                    <div class="mb-4">
+                        <label for="amount" class="form-label">Số tiền nạp</label>
+                        <input name="amount" type="number" step="1000" min="1000" class="form-control" placeholder="Tối thiểu 1.000đ" required />
+                    </div>
+
+                    <button type="submit" class="btn btn-success">Xác nhận</button>
+                    <a asp-action="Index" class="btn btn-outline-secondary">Quay lại</a>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>

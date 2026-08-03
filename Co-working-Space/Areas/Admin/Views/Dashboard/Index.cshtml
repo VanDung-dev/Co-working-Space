@@ -1,0 +1,68 @@
+@{
+    ViewData["Title"] = "Tổng quan";
+    var monthly = (int)ViewBag.MonthlyBookings;
+}
+
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h4 class="mb-0">Tổng quan</h4>
+    <a asp-area="Admin" asp-controller="Booking" asp-action="Pending" class="btn btn-primary btn-sm">Xem đơn chờ duyệt</a>
+</div>
+
+<div class="row g-3 mb-4">
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-body">
+                <div class="text-muted small">Đơn đặt trong tháng</div>
+                <div class="fs-4 fw-bold">@monthly</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-body">
+                <div class="text-muted small">Phòng đang hoạt động</div>
+                <a asp-area="Admin" asp-controller="Room" asp-action="Index" class="fs-4 fw-bold text-decoration-none">Quản lý phòng</a>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-body">
+                <div class="text-muted small">Thiết bị</div>
+                <a asp-area="Admin" asp-controller="Equipment" asp-action="Index" class="fs-4 fw-bold text-decoration-none">Quản lý thiết bị</a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-header">Phòng được đặt nhiều nhất</div>
+    <div class="card-body p-0">
+        @if (ViewBag.MostUsedRooms is IEnumerable<dynamic> topRooms && topRooms.Any())
+        {
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0">
+                    <thead>
+                        <tr>
+                            <th>Phòng</th>
+                            <th class="text-end">Số lần đặt</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var r in topRooms)
+                        {
+                            <tr>
+                                <td class="fw-medium">@r.Name</td>
+                                <td class="text-end">@r.Count</td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        }
+        else
+        {
+            <p class="text-muted small p-3 mb-0">Chưa có phòng nào được duyệt đặt.</p>
+        }
+    </div>
+</div>

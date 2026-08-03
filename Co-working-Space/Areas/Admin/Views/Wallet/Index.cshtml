@@ -1,0 +1,39 @@
+@model List<Co_working_Space.Models.Wallet>
+
+@{
+    ViewData["Title"] = "Ví tiền";
+    var allUsers = (List<Microsoft.AspNetCore.Identity.IdentityUser>)ViewBag.AllUsers;
+}
+
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h4 class="mb-0">Ví tiền</h4>
+</div>
+
+<div class="card p-0 overflow-hidden">
+    <div class="table-responsive">
+        <table class="table table-hover align-middle mb-0">
+            <thead>
+                <tr>
+                    <th>Email</th>
+                    <th class="text-end">Số dư</th>
+                    <th class="text-end">Thao tác</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var u in allUsers)
+                {
+                    var wallet = Model.FirstOrDefault(w => w.UserId == u.Id);
+                    <tr>
+                        <td class="fw-medium">@u.Email</td>
+                        <td class="text-end @(wallet?.Balance > 0 ? "fw-semibold" : "text-muted")">
+                            @((wallet?.Balance ?? 0).ToString("N0")) đ
+                        </td>
+                        <td class="text-end">
+                            <a asp-action="TopUp" asp-route-userId="@u.Id" class="btn btn-outline-success btn-sm">Nạp tiền</a>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</div>

@@ -1,0 +1,44 @@
+@model Tuple<List<Co_working_Space.Models.Equipment>, List<string>>
+
+@{
+    ViewData["Title"] = "Gán thiết bị";
+    var allEquipment = Model.Item1;
+    var assigned = Model.Item2;
+}
+
+<div class="row justify-content-center">
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-body p-4">
+                <h5 class="mb-1">Thiết bị trong phòng</h5>
+                <p class="text-muted small mb-3">@ViewBag.RoomName</p>
+
+                <form asp-action="ManageEquipment" method="post">
+                    @Html.AntiForgeryToken()
+                    <input type="hidden" name="roomId" value="@ViewContext.RouteData.Values["id"]" />
+
+                    @if (!allEquipment.Any())
+                    {
+                        <p class="text-muted small mb-3">Chưa có thiết bị nào. Hãy thêm thiết bị trước.</p>
+                    }
+                    else
+                    {
+                        @foreach (var eq in allEquipment)
+                        {
+                            <div class="form-check mb-2">
+                                <input class="form-check-input" type="checkbox" name="equipmentIds" value="@eq.Id"
+                                       id="eq_@eq.Id" checked="@assigned.Contains(eq.Id)" />
+                                <label class="form-check-label" for="eq_@eq.Id">@eq.Name</label>
+                            </div>
+                        }
+                    }
+
+                    <div class="mt-4">
+                        <button type="submit" class="btn btn-primary">Lưu</button>
+                        <a asp-action="Index" class="btn btn-outline-secondary">Quay lại</a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>

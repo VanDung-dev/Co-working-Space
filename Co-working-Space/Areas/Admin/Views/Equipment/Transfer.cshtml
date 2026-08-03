@@ -1,0 +1,33 @@
+@{
+    ViewData["Title"] = "Điều chuyển thiết bị";
+}
+
+<div class="row justify-content-center">
+    <div class="col-md-5">
+        <div class="card">
+            <div class="card-body p-4">
+                <h5 class="mb-1">Điều chuyển</h5>
+                <p class="text-muted small mb-3">@ViewBag.EquipmentName — hiện ở <strong>@ViewBag.CurrentRoom</strong></p>
+
+                <form asp-action="Transfer" method="post">
+                    @Html.AntiForgeryToken()
+                    <input type="hidden" name="equipmentId" value="@ViewContext.RouteData.Values["id"]" />
+
+                    <div class="mb-4">
+                        <label class="form-label">Chuyển đến phòng</label>
+                        <select name="targetRoomId" class="form-select" required>
+                            <option value="">-- Chọn phòng --</option>
+                            @foreach (var room in (List<Co_working_Space.Models.Room>)ViewBag.Rooms)
+                            {
+                                <option value="@room.Id">@room.Name (@room.Capacity người)</option>
+                            }
+                        </select>
+                    </div>
+
+                    <button type="submit" class="btn btn-primary">Xác nhận</button>
+                    <a asp-action="Index" class="btn btn-outline-secondary">Quay lại</a>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>

@@ -1,0 +1,62 @@
+@model List<Co_working_Space.Models.Room>
+
+@{
+    ViewData["Title"] = "Quản lý phòng";
+}
+
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h4 class="mb-0">Quản lý phòng</h4>
+    <a asp-action="Create" class="btn btn-primary btn-sm">Thêm phòng</a>
+</div>
+
+@if (!Model.Any())
+{
+    <p class="text-muted">Chưa có phòng nào.</p>
+}
+else
+{
+    <div class="card p-0 overflow-hidden">
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+                <thead>
+                    <tr>
+                        <th>Tên</th>
+                        <th>Vị trí</th>
+                        <th class="text-center">Sức chứa</th>
+                        <th class="text-end">Giá / giờ</th>
+                        <th>Trạng thái</th>
+                        <th class="text-end">Thao tác</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var room in Model)
+                    {
+                        <tr>
+                            <td class="fw-medium">@room.Name</td>
+                            <td>@room.Location</td>
+                            <td class="text-center">@room.Capacity</td>
+                            <td class="text-end text-nowrap">@room.PricePerHour.ToString("N0") đ</td>
+                            <td>
+                                <span class="badge @(room.IsActive ? "badge-active" : "badge-inactive")">
+                                    @(room.IsActive ? "Hoạt động" : "Bảo trì")
+                                </span>
+                            </td>
+                            <td class="text-end">
+                                <div class="btn-group btn-group-sm">
+                                    <a asp-action="Edit" asp-route-id="@room.Id" class="btn btn-outline-secondary">Sửa</a>
+                                    <a asp-action="ManageEquipment" asp-route-id="@room.Id" class="btn btn-outline-primary">Thiết bị</a>
+                                    <form asp-action="ToggleStatus" asp-route-id="@room.Id" method="post" class="d-inline">
+                                        @Html.AntiForgeryToken()
+                                        <button type="submit" class="btn @(room.IsActive ? "btn-outline-warning" : "btn-outline-success")">
+                                            @(room.IsActive ? "Bảo trì" : "Kích hoạt")
+                                        </button>
+                                    </form>
+                                </div>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+}
