@@ -19,4 +19,5 @@ public class Booking
     public DateTime? PaidAt { get; set; }
     public Room? Room { get; set; }
     public IdentityUser? User { get; set; }
+    public ICollection<BookingApproval>? Approvals { get; set; }
 }
