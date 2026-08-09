@@ -1,4 +1,7 @@
 <Solution>
+  <Folder Name="/Solution Items/">
+    <File Path="compose.yaml" />
+  </Folder>
   <Project Path="Co-working-Space.Nunit/Co-working-Space.Nunit.csproj" />
   <Project Path="Co-working-Space.Seeder/Co-working-Space.Seeder.csproj" />
   <Project Path="Co-working-Space/Co-working-Space.csproj" />

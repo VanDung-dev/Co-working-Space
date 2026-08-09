@@ -58,6 +58,53 @@ dotnet run --project Co-working-Space/Co-working-Space.csproj
 
 ---
 
+## Chạy ứng dụng Web bằng Docker (Container độc lập)
+
+Ứng dụng Web có thể chạy trong một container độc lập, kết nối đến SQL Server ở bên ngoài (qua biến môi trường).
+
+### Build image
+
+```bash
+docker compose build
+```
+
+hoặc build trực tiếp từ thư mục con:
+
+```bash
+docker build -t co-working-space ./Co-working-Space
+```
+
+### Chạy container
+
+```bash
+docker run -p 8080:8080 --add-host host.docker.internal:host-gateway \
+  -e "ConnectionStrings__DefaultConnection=Server=host.docker.internal,1433;Database=CoWorkingSpace;User Id=sa;Password=StrongPass@1234;TrustServerCertificate=True" \
+  co-working-space
+```
+
+Truy cập ứng dụng tại: `http://localhost:8080`
+
+> Lưu ý: SQL Server phải đang chạy (Bước 1) để ứng dụng hoạt động. Nếu DB nằm trên máy khác, thay `host.docker.internal` bằng địa chỉ IP của máy đó.
+
+### Chia sẻ container cho người khác
+
+Xuất image thành file tar:
+
+```bash
+docker save co-working-space:latest -o co-working-space.tar
+```
+
+Người nhận mở lại bằng:
+
+```bash
+docker load -i co-working-space.tar
+docker run -p 8080:8080 --add-host host.docker.internal:host-gateway \
+  -e "ConnectionStrings__DefaultConnection=Server=host.docker.internal,1433;Database=CoWorkingSpace;User Id=sa;Password=StrongPass@1234;TrustServerCertificate=True" \
+  co-working-space
+```
+
+---
+
 ## Chạy Kiểm thử (Unit Tests)
 
 ```bash

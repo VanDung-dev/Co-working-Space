@@ -1,0 +1,6 @@
+**/.git
+**/bin
+**/obj
+**/.DS_Store
+**/logs
+**/*.user

@@ -1,0 +1,6 @@
+﻿services:
+  co-working-space:
+    image: co-working-space
+    build:
+      context: ./Co-working-Space
+      dockerfile: Dockerfile
