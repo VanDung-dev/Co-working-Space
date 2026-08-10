@@ -20,7 +20,7 @@ Hệ thống Quản lý và Đặt phòng họp theo giờ dành cho mô hình C
 ├── Co-working-Space/           # Web Application chính (MVC)
 ├── Co-working-Space.Seeder/    # CLI Tool độc lập đẩy dữ liệu mẫu vào Database
 ├── Co-working-Space.Nunit/     # Bộ Unit Tests kiểm thử hệ thống (132 test cases)
-└── docker-compose.db.yaml      # File cấu hình SQL Server Container
+└── compose.yaml                # Docker Compose: App Web + SQL Server Container
 ```
 
 ---
@@ -37,7 +37,7 @@ Hệ thống Quản lý và Đặt phòng họp theo giờ dành cho mô hình C
 
 #### **Bước 1: Khởi động Database SQL Server**
 ```bash
-docker compose -f docker-compose.db.yaml up -d
+docker compose up -d
 ```
 
 #### **Bước 2: Cập nhật Database (Apply Migrations)**

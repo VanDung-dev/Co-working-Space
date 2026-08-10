@@ -1,6 +1,36 @@
-﻿services:
+﻿# Server   : localhost
+# Port     : 1433
+# User     : sa
+# Password : StrongPass@1234
+
+services:
   co-working-space:
     image: co-working-space
     build:
       context: ./Co-working-Space
       dockerfile: Dockerfile
+    environment:
+      - ConnectionStrings__DefaultConnection=Server=mssql,1433;Database=CoWorkingSpace;User Id=sa;Password=StrongPass@1234;TrustServerCertificate=True
+    depends_on:
+      - mssql
+    ports:
+      - "8080:8080"
+
+  mssql:
+    image: mcr.microsoft.com/mssql/server:2022-latest
+    platform: linux/amd64
+    ports:
+      - "1433:1433"
+    environment:
+      - ACCEPT_EULA=Y
+      - SA_PASSWORD=StrongPass@1234
+      - MSSQL_PID=Developer
+      - MSSQL_COLLATION=SQL_Latin1_General_CP1_CI_AS
+      - TZ=Asia/Ho_Chi_Minh
+    volumes:
+      - mssql-db:/var/opt/mssql
+    container_name: mssql
+    restart: always
+
+volumes:
+  mssql-db:
