@@ -11,6 +11,9 @@ public class BookingService : IBookingService
     private readonly ApplicationDbContext _context;
     public BookingService(ApplicationDbContext context) => _context = context;
 
+    public static readonly TimeZoneInfo VnTimeZone = TimeZoneInfo.FindSystemTimeZoneById("Asia/Ho_Chi_Minh");
+    public static DateTime VnNow => TimeZoneInfo.ConvertTimeFromUtc(DateTime.UtcNow, VnTimeZone);
+
     public async Task<bool> HasOverlapAsync(string roomId, DateTime startTime, DateTime endTime, string? currentBookingId = null)
     {
         return await _context.Bookings.AnyAsync(b =>
@@ -23,7 +26,7 @@ public class BookingService : IBookingService
     public async Task<string?> CreateBookingAsync(CreateBookingViewModel model, string userId)
     {
         if (model.StartTime >= model.EndTime ||
-            DateTime.SpecifyKind(model.StartTime, DateTimeKind.Utc) <= DateTime.UtcNow)
+            model.StartTime <= VnNow)
             return null;
 
         var room = await _context.Rooms.FindAsync(model.RoomId);

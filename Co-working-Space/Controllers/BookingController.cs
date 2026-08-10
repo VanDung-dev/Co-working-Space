@@ -31,8 +31,8 @@ public class BookingController : Controller
         var model = new CreateBookingViewModel
         {
             RoomId = roomId,
-            StartTime = DateTime.Now.AddHours(1),
-            EndTime = DateTime.Now.AddHours(2)
+            StartTime = BookingService.VnNow.AddHours(1),
+            EndTime = BookingService.VnNow.AddHours(2)
         };
         return View(model);
     }
