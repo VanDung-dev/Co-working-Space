@@ -21,7 +21,8 @@ if (string.IsNullOrEmpty(settingsPath))
 Console.WriteLine($"📄 Loading configuration from: {settingsPath}");
 
 var configBuilder = new ConfigurationBuilder()
-    .AddJsonFile(settingsPath, optional: false);
+    .AddJsonFile(settingsPath, optional: false)
+    .AddEnvironmentVariables();
 
 var configuration = configBuilder.Build();
 var connectionString = configuration.GetConnectionString("DefaultConnection");
@@ -39,7 +40,7 @@ var services = new ServiceCollection();
 
 services.AddLogging();
 services.AddDbContext<ApplicationDbContext>(options =>
-    options.UseSqlServer(connectionString));
+    options.UseMySQL(connectionString, o => o.EnableRetryOnFailure()));
 
 services.AddIdentity<IdentityUser, IdentityRole>(options =>
 {
