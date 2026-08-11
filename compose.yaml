@@ -1,7 +1,7 @@
 ﻿# Server   : localhost
-# Port     : 1433
-# User     : sa
-# Password : StrongPass@1234
+# Port     : 3306
+# User     : coworking
+# Password : coworking123
 
 services:
   co-working-space:
@@ -10,27 +10,26 @@ services:
       context: ./Co-working-Space
       dockerfile: Dockerfile
     environment:
-      - ConnectionStrings__DefaultConnection=Server=mssql,1433;Database=CoWorkingSpace;User Id=sa;Password=StrongPass@1234;TrustServerCertificate=True
+      - ConnectionStrings__DefaultConnection=Server=mysql;Port=3306;Database=CoWorkingSpace;User Id=coworking;Password=coworking123
     depends_on:
-      - mssql
+      - mysql
     ports:
       - "8080:8080"
 
-  mssql:
-    image: mcr.microsoft.com/mssql/server:2022-latest
+  mysql:
+    image: mysql:8
     platform: linux/amd64
     ports:
-      - "1433:1433"
+      - "3306:3306"
     environment:
-      - ACCEPT_EULA=Y
-      - SA_PASSWORD=StrongPass@1234
-      - MSSQL_PID=Developer
-      - MSSQL_COLLATION=SQL_Latin1_General_CP1_CI_AS
-      - TZ=Asia/Ho_Chi_Minh
+      - MYSQL_ROOT_PASSWORD=root123
+      - MYSQL_DATABASE=CoWorkingSpace
+      - MYSQL_USER=coworking
+      - MYSQL_PASSWORD=coworking123
     volumes:
-      - mssql-db:/var/opt/mssql
-    container_name: mssql
+      - mysql-db:/var/lib/mysql
+    container_name: mysql
     restart: always
 
 volumes:
-  mssql-db:
+  mysql-db:

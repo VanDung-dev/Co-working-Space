@@ -7,7 +7,7 @@ Hệ thống Quản lý và Đặt phòng họp theo giờ dành cho mô hình C
 ## Công nghệ sử dụng
 
 - **Framework**: .NET 10.0 (ASP.NET Core MVC)
-- **Database**: SQL Server 2022 (Docker) + Entity Framework Core 10
+- **Database**: MySQL 8 (Docker) + Entity Framework Core 10
 - **Authentication & Authorization**: ASP.NET Core Identity (RBAC: Admin, Staff, User)
 - **Frontend**: Bootstrap 5, HTML5/CSS3, SweetAlert2
 - **Testing**: NUnit (132 test cases)
@@ -20,7 +20,7 @@ Hệ thống Quản lý và Đặt phòng họp theo giờ dành cho mô hình C
 ├── Co-working-Space/           # Web Application chính (MVC)
 ├── Co-working-Space.Seeder/    # CLI Tool độc lập đẩy dữ liệu mẫu vào Database
 ├── Co-working-Space.Nunit/     # Bộ Unit Tests kiểm thử hệ thống (132 test cases)
-└── compose.yaml                # Docker Compose: App Web + SQL Server Container
+└── compose.yaml                # Docker Compose: App Web + MySQL Container
 ```
 
 ---
@@ -29,13 +29,13 @@ Hệ thống Quản lý và Đặt phòng họp theo giờ dành cho mô hình C
 
 ### 1. Yêu cầu trước khi cài đặt
 - [.NET 10.0 SDK](https://dotnet.microsoft.com/download)
-- [Docker Desktop](https://www.docker.com/products/docker-desktop/) (chạy SQL Server)
+- [Docker Desktop](https://www.docker.com/products/docker-desktop/) (chạy MySQL)
 
 ---
 
 ### 2. Các bước khởi chạy
 
-#### **Bước 1: Khởi động Database SQL Server**
+#### **Bước 1: Khởi động Database MySQL**
 ```bash
 docker compose up -d
 ```
@@ -60,7 +60,7 @@ dotnet run --project Co-working-Space/Co-working-Space.csproj
 
 ## Chạy ứng dụng Web bằng Docker (Container độc lập)
 
-Ứng dụng Web có thể chạy trong một container độc lập, kết nối đến SQL Server ở bên ngoài (qua biến môi trường).
+Ứng dụng Web có thể chạy trong một container độc lập, kết nối đến MySQL ở bên ngoài (qua biến môi trường).
 
 ### Build image
 
@@ -77,14 +77,14 @@ docker build -t co-working-space ./Co-working-Space
 ### Chạy container
 
 ```bash
-docker run -p 8080:8080 --add-host host.docker.internal:host-gateway \
-  -e "ConnectionStrings__DefaultConnection=Server=host.docker.internal,1433;Database=CoWorkingSpace;User Id=sa;Password=StrongPass@1234;TrustServerCertificate=True" \
+docker run -p 8080:8080 \
+  -e "ConnectionStrings__DefaultConnection=Server=host.docker.internal;Port=3306;Database=CoWorkingSpace;User Id=coworking;Password=coworking123" \
   co-working-space
 ```
 
 Truy cập ứng dụng tại: `http://localhost:8080`
 
-> Lưu ý: SQL Server phải đang chạy (Bước 1) để ứng dụng hoạt động. Nếu DB nằm trên máy khác, thay `host.docker.internal` bằng địa chỉ IP của máy đó.
+> Lưu ý: MySQL phải đang chạy (Bước 1) để ứng dụng hoạt động. Nếu DB nằm trên máy khác, thay `host.docker.internal` bằng địa chỉ IP của máy đó.
 
 ### Chia sẻ container cho người khác
 
@@ -98,10 +98,76 @@ Người nhận mở lại bằng:
 
 ```bash
 docker load -i co-working-space.tar
-docker run -p 8080:8080 --add-host host.docker.internal:host-gateway \
-  -e "ConnectionStrings__DefaultConnection=Server=host.docker.internal,1433;Database=CoWorkingSpace;User Id=sa;Password=StrongPass@1234;TrustServerCertificate=True" \
+docker run -p 8080:8080 \
+  -e "ConnectionStrings__DefaultConnection=Server=host.docker.internal;Port=3306;Database=CoWorkingSpace;User Id=coworking;Password=coworking123" \
   co-working-space
 ```
+
+---
+
+## Deploy lên AWS (2 EC2: web + MySQL riêng)
+
+Chạy container web trên EC2-A và container MySQL trên EC2-B (cùng VPC, không cần RDS). Không cần sửa code — chỉ đổi connection string qua biến môi trường.
+
+### Kiến trúc
+
+```text
+EC2-A (web)  --private IP-->  EC2-B (MySQL container, port 3306)
+  port 8080 (public, chỉ IP của bạn)
+```
+
+### Bước 1: EC2-B — chạy MySQL container
+
+```bash
+# SSH vào EC2-B, cài Docker rồi chạy:
+apt update && apt install -y docker.io docker-compose-v2
+git clone <repo> && cd Co-working-Space
+docker compose up -d mysql
+```
+
+- Mở SG của EC2-B: inbound `TCP 3306`, source = **security group ID của EC2-A** (không mở ra internet).
+- Container `mysql:8` tự tạo DB `CoWorkingSpace` + user `coworking` (đã grant cho mọi host).
+
+### Bước 2: EC2-A — build & chạy web container
+
+```bash
+# SSH vào EC2-A, cài Docker:
+apt update && apt install -y docker.io
+git clone <repo> && cd Co-working-Space
+docker build -t co-working-space ./Co-working-Space
+
+docker run -d --restart unless-stopped -p 8080:8080 \
+  -e "ConnectionStrings__DefaultConnection=Server=<EC2-B-private-IP>;Port=3306;Database=CoWorkingSpace;User Id=coworking;Password=coworking123" \
+  co-working-space
+```
+
+- Mở SG của EC2-A: inbound `TCP 8080`, source = IP của bạn.
+- Kiểm tra kết nối DB: `nc -zv <EC2-B-private-IP> 3306` → `succeeded` là OK.
+
+### Bước 3: Migration + Seed (1 lần, từ máy local qua SSH tunnel)
+
+DB mới sẽ trống, cần nạp schema + dữ liệu mẫu. Không lộ port 3306 ra internet — dùng SSH tunnel tới EC2-B:
+
+```bash
+# Terminal 1: mở tunnel (máy local)
+ssh -i <key.pem> -L 3306:localhost:3306 ubuntu@<EC2-B-public-IP>
+
+# Terminal 2: chạy migration + seed (máy local)
+dotnet ef database update --project Co-working-Space/Co-working-Space.csproj \
+  --connection "Server=localhost;Port=3306;Database=CoWorkingSpace;User Id=coworking;Password=coworking123"
+
+ConnectionStrings__DefaultConnection="Server=localhost;Port=3306;Database=CoWorkingSpace;User Id=coworking;Password=coworking123" \
+  dotnet run --project Co-working-Space.Seeder/Co-working-Space.Seeder.csproj
+```
+
+### Bước 4: Truy cập
+
+Vào trình duyệt: `http://<EC2-A-public-IP>:8080`, đăng nhập bằng tài khoản mẫu (mục phía dưới).
+
+> Ghi chú:
+> - Cả 2 EC2 phải **cùng VPC** (mặc định là Default VPC) — private IP mới nối được. Khác VPC/region cần VPC peering, phức tạp hơn.
+> - Dữ liệu MySQL lưu trong volume `mysql-db` trên ổ EC2-B — nhớ snapshot nếu muốn giữ lâu dài.
+> - Khuyến nghị bảo mật: lưu connection string trong AWS Secrets Manager / SSM Parameter Store thay vì hardcode trong lệnh.
 
 ---
 
