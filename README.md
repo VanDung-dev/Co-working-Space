@@ -107,7 +107,7 @@ docker run -p 8080:8080 \
 
 ## Deploy lên AWS (2 EC2: web + MySQL riêng)
 
-Chạy container web trên EC2-A và container MySQL trên EC2-B (cùng VPC, không cần RDS). Không cần sửa code — chỉ đổi connection string qua biến môi trường.
+Chạy container web trên EC2-A và container MySQL trên EC2-B (cùng VPC, không cần RDS). Cách làm theo kiểu **"đẩy nguyên image đang có"** — export `docker save` từ máy local rồi `docker load` trên EC2, **không build, không cấu hình lại gì trên cloud**.
 
 ### Kiến trúc
 
@@ -116,25 +116,39 @@ EC2-A (web)  --private IP-->  EC2-B (MySQL container, port 3306)
   port 8080 (public, chỉ IP của bạn)
 ```
 
-### Bước 1: EC2-B — chạy MySQL container
+### Bước 0: Export image từ máy local (chỉ 2 lệnh)
 
 ```bash
-# SSH vào EC2-B, cài Docker rồi chạy:
+docker save co-working-space:latest -o web.tar
+docker save mysql:8 -o mysql.tar
+```
+
+### Bước 1: Đẩy image lên 2 EC2
+
+```bash
+scp -i <key.pem> web.tar    ubuntu@<EC2-A-public-IP>:~/
+scp -i <key.pem> mysql.tar  ubuntu@<EC2-B-public-IP>:~/
+scp -i <key.pem> compose.yaml ubuntu@<EC2-B-public-IP>:~/   # tái dùng config MySQL
+```
+
+### Bước 2: EC2-B — nạp & chạy MySQL container (không sửa config)
+
+```bash
+# SSH vào EC2-B, cài Docker:
 apt update && apt install -y docker.io docker-compose-v2
-git clone <repo> && cd Co-working-Space
-docker compose up -d mysql
+docker load -i mysql.tar
+docker compose up -d mysql    # compose thấy image đã có sẵn → không pull, dùng đúng config trong compose.yaml
 ```
 
 - Mở SG của EC2-B: inbound `TCP 3306`, source = **security group ID của EC2-A** (không mở ra internet).
 - Container `mysql:8` tự tạo DB `CoWorkingSpace` + user `coworking` (đã grant cho mọi host).
 
-### Bước 2: EC2-A — build & chạy web container
+### Bước 3: EC2-A — nạp & chạy web container (1 lệnh)
 
 ```bash
 # SSH vào EC2-A, cài Docker:
 apt update && apt install -y docker.io
-git clone <repo> && cd Co-working-Space
-docker build -t co-working-space ./Co-working-Space
+docker load -i web.tar
 
 docker run -d --restart unless-stopped -p 8080:8080 \
   -e "ConnectionStrings__DefaultConnection=Server=<EC2-B-private-IP>;Port=3306;Database=CoWorkingSpace;User Id=coworking;Password=coworking123" \
@@ -143,8 +157,9 @@ docker run -d --restart unless-stopped -p 8080:8080 \
 
 - Mở SG của EC2-A: inbound `TCP 8080`, source = IP của bạn.
 - Kiểm tra kết nối DB: `nc -zv <EC2-B-private-IP> 3306` → `succeeded` là OK.
+- Chỗ duy nhất phải thay là `<EC2-B-private-IP>` (không thể tránh, vì web và db nằm 2 máy khác nhau).
 
-### Bước 3: Migration + Seed (1 lần, từ máy local qua SSH tunnel)
+### Bước 4: Migration + Seed (1 lần, từ máy local qua SSH tunnel)
 
 DB mới sẽ trống, cần nạp schema + dữ liệu mẫu. Không lộ port 3306 ra internet — dùng SSH tunnel tới EC2-B:
 
@@ -160,12 +175,13 @@ ConnectionStrings__DefaultConnection="Server=localhost;Port=3306;Database=CoWork
   dotnet run --project Co-working-Space.Seeder/Co-working-Space.Seeder.csproj
 ```
 
-### Bước 4: Truy cập
+### Bước 5: Truy cập
 
 Vào trình duyệt: `http://<EC2-A-public-IP>:8080`, đăng nhập bằng tài khoản mẫu (mục phía dưới).
 
 > Ghi chú:
 > - Cả 2 EC2 phải **cùng VPC** (mặc định là Default VPC) — private IP mới nối được. Khác VPC/region cần VPC peering, phức tạp hơn.
+> - `web.tar` ~200MB, `mysql.tar` ~500MB — scp hơi lâu một chút, kiên nhẫn.
 > - Dữ liệu MySQL lưu trong volume `mysql-db` trên ổ EC2-B — nhớ snapshot nếu muốn giữ lâu dài.
 > - Khuyến nghị bảo mật: lưu connection string trong AWS Secrets Manager / SSM Parameter Store thay vì hardcode trong lệnh.
 
